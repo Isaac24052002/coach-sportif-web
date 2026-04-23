@@ -1,0 +1,2663 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Coach Sportif Temps Reel - Web</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap");
+
+    :root {
+      --bg-1: #07121b;
+      --bg-2: #132737;
+      --bg-3: #0a1f2d;
+      --panel: rgba(10, 28, 40, 0.8);
+      --panel-border: rgba(161, 212, 227, 0.18);
+      --text: #ecf4f7;
+      --muted: #b5c7ce;
+      --green: #00c853;
+      --red: #d50000;
+      --amber: #ffab00;
+      --cyan: #78d2ff;
+      --chip: rgba(120, 210, 255, 0.17);
+      --shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
+      --radius: 18px;
+      --radius-sm: 12px;
+      --ring-progress: 0%;
+      --ring-color: #00c853;
+      --stage-ratio: 16 / 9;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      color: var(--text);
+      background:
+        radial-gradient(1100px 550px at -8% -10%, #1c3f58 0%, transparent 58%),
+        radial-gradient(1000px 520px at 105% 12%, #20485f 0%, transparent 52%),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2));
+      font-family: "Manrope", sans-serif;
+    }
+
+    body {
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      pointer-events: none;
+      z-index: -1;
+      inset: 0;
+    }
+
+    body::before {
+      background:
+        radial-gradient(680px 420px at 18% 14%, rgba(120, 210, 255, 0.14), transparent 70%),
+        radial-gradient(780px 420px at 82% 84%, rgba(0, 200, 83, 0.1), transparent 72%);
+      animation: driftGlow 11s ease-in-out infinite alternate;
+    }
+
+    body::after {
+      opacity: 0.08;
+      background-image:
+        linear-gradient(120deg, rgba(255, 255, 255, 0.15) 0%, transparent 32%),
+        repeating-linear-gradient(
+          0deg,
+          rgba(255, 255, 255, 0.2) 0px,
+          rgba(255, 255, 255, 0.2) 1px,
+          transparent 1px,
+          transparent 3px
+        );
+      mix-blend-mode: soft-light;
+    }
+
+    .app {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding:
+        calc(12px + env(safe-area-inset-top, 0px))
+        calc(12px + env(safe-area-inset-right, 0px))
+        calc(14px + env(safe-area-inset-bottom, 0px))
+        calc(12px + env(safe-area-inset-left, 0px));
+      display: grid;
+      gap: 12px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .topbar {
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .topbar::after {
+      content: "";
+      position: absolute;
+      width: 340px;
+      height: 340px;
+      right: -120px;
+      top: -210px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(120, 210, 255, 0.3) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .title {
+      margin: 0;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: clamp(1.18rem, 2.2vw, 1.7rem);
+      line-height: 1.2;
+      letter-spacing: 0.01em;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .eyebrow {
+      margin: 0 0 5px;
+      font-size: 0.74rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: #9fd9ed;
+    }
+
+    .hero-row {
+      display: grid;
+      gap: 11px;
+    }
+
+    .session-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 6px 12px;
+      border: 1px solid rgba(164, 219, 235, 0.24);
+      background: linear-gradient(130deg, rgba(9, 35, 50, 0.9), rgba(20, 56, 72, 0.55));
+      color: #d6edf5;
+      font-size: 0.77rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .controls {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .controls > * {
+      width: 100%;
+      min-width: 0;
+    }
+
+    button, select {
+      border: 1px solid rgba(208, 234, 244, 0.24);
+      background: rgba(8, 29, 42, 0.95);
+      color: var(--text);
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      padding: 10px 12px;
+      min-height: 44px;
+      cursor: pointer;
+      transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+      font-family: inherit;
+    }
+
+    button:hover, select:hover {
+      border-color: rgba(120, 210, 255, 0.7);
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .exercise-picker {
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .exercise-btn {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .exercise-btn::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(120, 210, 255, 0.18), rgba(17, 126, 132, 0));
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      pointer-events: none;
+    }
+
+    .exercise-btn.active {
+      background: linear-gradient(120deg, #0f435f, #117e84);
+      border-color: rgba(165, 236, 243, 0.72);
+      box-shadow: inset 0 0 0 1px rgba(219, 245, 250, 0.2), 0 0 24px rgba(85, 208, 225, 0.3);
+    }
+
+    .exercise-btn.active::before {
+      opacity: 1;
+    }
+
+    .content-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .stage-card {
+      padding: 12px;
+      transition: box-shadow 0.25s ease, border-color 0.25s ease;
+    }
+
+    .stage-card.flash-good {
+      box-shadow: 0 0 0 1px rgba(0, 200, 83, 0.45), 0 0 38px rgba(0, 200, 83, 0.28);
+    }
+
+    .stage-card.flash-bad {
+      box-shadow: 0 0 0 1px rgba(213, 0, 0, 0.45), 0 0 38px rgba(213, 0, 0, 0.28);
+    }
+
+    .video-stage {
+      width: 100%;
+      position: relative;
+      display: grid;
+      gap: 10px;
+    }
+
+    .stage-viewport {
+      width: 100%;
+      aspect-ratio: var(--stage-ratio);
+      border-radius: 16px;
+      border: 1px solid rgba(149, 219, 236, 0.2);
+      overflow: hidden;
+      position: relative;
+      background: linear-gradient(145deg, #031018, #163548);
+      isolation: isolate;
+    }
+
+    #outputCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: #061926;
+    }
+
+    #inputVideo {
+      display: none;
+    }
+
+    .video-grid-fx {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(rgba(101, 187, 212, 0.16) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(101, 187, 212, 0.16) 1px, transparent 1px);
+      background-size: 60px 60px;
+      opacity: 0.06;
+      mix-blend-mode: screen;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .stage-sheen,
+    .stage-vignette {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .stage-sheen {
+      z-index: 2;
+      background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, transparent 18%, transparent 82%, rgba(255, 255, 255, 0.04) 100%);
+      mix-blend-mode: screen;
+    }
+
+    .stage-vignette {
+      z-index: 3;
+      background:
+        radial-gradient(circle at center, transparent 42%, rgba(1, 10, 17, 0.14) 100%),
+        linear-gradient(180deg, rgba(1, 10, 17, 0.2) 0%, transparent 24%, transparent 72%, rgba(1, 10, 17, 0.44) 100%);
+    }
+
+    .frame-guide {
+      position: absolute;
+      inset: 9% 9% 11%;
+      border: 1px solid rgba(186, 228, 241, 0.18);
+      border-radius: 24px;
+      z-index: 3;
+      pointer-events: none;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+    }
+
+    .frame-guide::before,
+    .frame-guide::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background:
+        linear-gradient(#89dfff, #89dfff) left top / 28px 2px no-repeat,
+        linear-gradient(#89dfff, #89dfff) left top / 2px 28px no-repeat,
+        linear-gradient(#89dfff, #89dfff) right top / 28px 2px no-repeat,
+        linear-gradient(#89dfff, #89dfff) right top / 2px 28px no-repeat,
+        linear-gradient(#89dfff, #89dfff) left bottom / 28px 2px no-repeat,
+        linear-gradient(#89dfff, #89dfff) left bottom / 2px 28px no-repeat,
+        linear-gradient(#89dfff, #89dfff) right bottom / 28px 2px no-repeat,
+        linear-gradient(#89dfff, #89dfff) right bottom / 2px 28px no-repeat;
+      opacity: 0.75;
+    }
+
+    .badge-row {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      justify-content: flex-start;
+      flex-wrap: wrap;
+      gap: 8px;
+      pointer-events: none;
+      z-index: 4;
+    }
+
+    .badge {
+      background: rgba(5, 22, 32, 0.78);
+      color: var(--text);
+      border: 1px solid rgba(176, 226, 241, 0.25);
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: 0.77rem;
+      font-weight: 800;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.02em;
+    }
+
+    .badge[data-state="good"] {
+      border-color: rgba(0, 200, 83, 0.62);
+      box-shadow: 0 0 24px rgba(0, 200, 83, 0.15);
+    }
+
+    .badge[data-state="warn"] {
+      border-color: rgba(255, 171, 0, 0.7);
+      box-shadow: 0 0 24px rgba(255, 171, 0, 0.14);
+    }
+
+    .badge[data-state="error"] {
+      border-color: rgba(213, 0, 0, 0.7);
+      box-shadow: 0 0 24px rgba(213, 0, 0, 0.14);
+    }
+
+    .hud-bottom {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      z-index: 4;
+      pointer-events: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 10px;
+    }
+
+    .stage-insight {
+      max-width: min(340px, 58%);
+      background: rgba(4, 18, 27, 0.78);
+      border: 1px solid rgba(152, 219, 236, 0.2);
+      border-radius: 16px;
+      padding: 10px 12px;
+      box-shadow: 0 14px 28px rgba(0, 0, 0, 0.22);
+    }
+
+    .stage-insight-label {
+      margin: 0 0 4px;
+      color: #8fcde2;
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .stage-insight-title {
+      margin: 0;
+      font-size: clamp(1rem, 2vw, 1.18rem);
+      font-weight: 800;
+      line-height: 1.18;
+      letter-spacing: 0.01em;
+    }
+
+    .stage-insight-copy {
+      margin: 5px 0 0;
+      color: #bed5dd;
+      font-size: 0.8rem;
+      line-height: 1.36;
+    }
+
+    .angle-widget {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(4, 20, 30, 0.74);
+      border: 1px solid rgba(152, 219, 236, 0.24);
+      border-radius: 14px;
+      padding: 8px 10px;
+      min-width: 170px;
+    }
+
+    .angle-ring {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      position: relative;
+      background: conic-gradient(var(--ring-color) var(--ring-progress), rgba(218, 240, 247, 0.18) 0%);
+      display: grid;
+      place-items: center;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.13);
+      flex: 0 0 auto;
+    }
+
+    .angle-ring::before {
+      content: "";
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(2, 13, 20, 0.93);
+      position: absolute;
+    }
+
+    .angle-ring span {
+      position: relative;
+      z-index: 1;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .angle-copy {
+      min-width: 0;
+    }
+
+    .angle-title {
+      margin: 0;
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: #d5edf5;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .angle-hint {
+      margin: 4px 0 0;
+      font-size: 0.74rem;
+      color: #b5c7ce;
+      line-height: 1.32;
+    }
+
+    .rep-pulse {
+      position: absolute;
+      left: 50%;
+      top: 20%;
+      transform: translate(-50%, -50%) scale(0.9);
+      background: rgba(0, 16, 24, 0.66);
+      border: 1px solid rgba(157, 221, 238, 0.3);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-size: clamp(0.8rem, 1.8vw, 0.96rem);
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 5;
+      text-transform: uppercase;
+    }
+
+    .rep-pulse.show {
+      animation: repPop 780ms cubic-bezier(0.2, 0.9, 0.2, 1);
+    }
+
+    .rep-pulse.good {
+      border-color: rgba(0, 200, 83, 0.7);
+      color: #c9f8dd;
+      text-shadow: 0 0 18px rgba(0, 200, 83, 0.4);
+    }
+
+    .rep-pulse.bad {
+      border-color: rgba(213, 0, 0, 0.7);
+      color: #ffd3d3;
+      text-shadow: 0 0 18px rgba(213, 0, 0, 0.38);
+    }
+
+    .spark-field {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 4;
+    }
+
+    .spark {
+      position: absolute;
+      left: 50%;
+      top: 62%;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--spark-color, #00c853);
+      box-shadow: 0 0 12px var(--spark-color, #00c853);
+      animation: sparkFly 700ms ease-out forwards;
+      transform: translate(-50%, -50%);
+    }
+
+    .feedback-card {
+      padding: 14px 15px;
+      border-left: 4px solid var(--amber);
+      background: linear-gradient(180deg, rgba(25, 43, 49, 0.84), rgba(12, 28, 38, 0.88));
+      transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .feedback-card.ok {
+      border-left-color: var(--green);
+      background: rgba(0, 200, 83, 0.15);
+      box-shadow: inset 0 0 0 1px rgba(0, 200, 83, 0.2);
+    }
+
+    .feedback-card.error {
+      border-left-color: var(--red);
+      background: rgba(213, 0, 0, 0.16);
+      box-shadow: inset 0 0 0 1px rgba(213, 0, 0, 0.2);
+    }
+
+    .feedback-card.neutral {
+      border-left-color: var(--amber);
+      background: rgba(255, 171, 0, 0.15);
+      box-shadow: inset 0 0 0 1px rgba(255, 171, 0, 0.18);
+    }
+
+    #feedbackText {
+      margin: 0;
+      font-size: 1.02rem;
+      font-weight: 700;
+      line-height: 1.35;
+      letter-spacing: 0.01em;
+    }
+
+    .coach-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .coach-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+      color: #d8eef5;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .coach-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--amber);
+      box-shadow: 0 0 0 5px rgba(255, 171, 0, 0.12);
+    }
+
+    .coach-dot.ok {
+      background: var(--green);
+      box-shadow: 0 0 0 5px rgba(0, 200, 83, 0.12);
+    }
+
+    .coach-dot.error {
+      background: var(--red);
+      box-shadow: 0 0 0 5px rgba(213, 0, 0, 0.12);
+    }
+
+    .coach-dot.neutral {
+      background: var(--amber);
+      box-shadow: 0 0 0 5px rgba(255, 171, 0, 0.12);
+    }
+
+    .feedback-support {
+      margin: 6px 0 0;
+      font-size: 0.84rem;
+      color: #c3d6dd;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+
+    .side-column {
+      display: grid;
+      gap: 12px;
+    }
+
+    .stats-panel {
+      padding: 12px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .panel-kicker {
+      margin: 0 0 6px;
+      color: #9dd8eb;
+      font-size: 0.74rem;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .stat {
+      border-radius: var(--radius-sm);
+      background: linear-gradient(180deg, rgba(13, 40, 54, 0.84), rgba(10, 27, 37, 0.92));
+      border: 1px solid rgba(163, 216, 231, 0.17);
+      padding: 10px;
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 0.73rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 5px;
+    }
+
+    .stat-value {
+      font-size: 1.18rem;
+      font-weight: 800;
+      line-height: 1.15;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .quality-wrap {
+      margin-top: 6px;
+      display: grid;
+      gap: 5px;
+    }
+
+    .quality-track {
+      width: 100%;
+      height: 11px;
+      border-radius: 999px;
+      background: rgba(212, 235, 242, 0.2);
+      overflow: hidden;
+    }
+
+    .quality-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #ff7f11, #ffd166, #00c853);
+      transition: width 0.2s ease;
+    }
+
+    .quality-label {
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .hints {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+
+    @keyframes driftGlow {
+      0% { transform: translate3d(0, 0, 0) scale(1); }
+      100% { transform: translate3d(0, -1.4%, 0) scale(1.06); }
+    }
+
+    @keyframes repPop {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(0.86); }
+      18% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -58%) scale(1.06); }
+    }
+
+    @keyframes sparkFly {
+      0% {
+        opacity: 0.96;
+        transform: translate(-50%, -50%) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.25);
+      }
+    }
+
+    @media (min-width: 860px) {
+      .app {
+        padding: 20px;
+        gap: 14px;
+      }
+
+      .video-stage {
+        gap: 0;
+      }
+
+      .hero-row {
+        grid-template-columns: 1.2fr auto;
+        align-items: start;
+      }
+
+      .controls {
+        grid-template-columns: minmax(180px, 1fr) auto auto auto;
+        align-items: stretch;
+      }
+
+      .content-grid {
+        grid-template-columns: minmax(0, 2.15fr) minmax(320px, 0.72fr);
+        align-items: start;
+      }
+
+      .side-column {
+        position: sticky;
+        top: 18px;
+      }
+
+      .feedback-card {
+        min-height: 74px;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 860px) {
+      .topbar::after {
+        width: 260px;
+        height: 260px;
+        right: -90px;
+        top: -170px;
+      }
+
+      .stage-insight-copy {
+        display: none;
+      }
+    }
+
+    @media (max-width: 640px) {
+      :root {
+        --stage-ratio: 9 / 16;
+      }
+
+      .app {
+        gap: 10px;
+      }
+
+      .topbar,
+      .feedback-card,
+      .stats-panel,
+      .stage-card {
+        padding: 11px;
+      }
+
+      .video-stage {
+        width: 100%;
+        gap: 9px;
+      }
+
+      .stage-viewport {
+        min-height: min(76svh, 760px);
+      }
+
+      .controls {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .exercise-picker {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .exercise-picker .exercise-btn:last-child:nth-child(odd) {
+        grid-column: 1 / -1;
+      }
+
+      .hud-bottom {
+        position: static;
+        left: auto;
+        right: auto;
+        bottom: auto;
+        pointer-events: auto;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+
+      .badge-row {
+        position: static;
+        top: auto;
+        left: auto;
+        right: auto;
+        pointer-events: auto;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
+      }
+
+      .badge {
+        width: 100%;
+        text-align: center;
+      }
+
+      .angle-widget {
+        min-width: 0;
+        max-width: 100%;
+      }
+
+      .stage-insight {
+        max-width: 100%;
+      }
+
+      .stage-insight-copy {
+        display: block;
+      }
+
+      .badge {
+        padding: 6px 10px;
+        font-size: 0.72rem;
+      }
+
+      .frame-guide {
+        display: none;
+      }
+
+      .video-grid-fx,
+      .stage-sheen {
+        display: none;
+      }
+    }
+
+    @media (max-height: 520px) and (pointer: coarse) {
+      :root {
+        --stage-ratio: 16 / 9;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .controls {
+        grid-template-columns: 1fr;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .chip {
+        font-size: 0.73rem;
+      }
+
+      #feedbackText {
+        font-size: 0.95rem;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="card topbar">
+      <div class="hero-row">
+        <div>
+          <p class="eyebrow">Precision / Rythme / Forme</p>
+          <h1 class="title">Coach Sportif Temps Reel</h1>
+          <p class="subtitle">Analyse pose 100% navigateur avec feedback intelligent en direct.</p>
+        </div>
+        <div class="session-strip">
+          <span class="chip" id="sessionChip">Session: 00:00</span>
+          <span class="chip" id="streakChip">Streak: x0</span>
+          <span class="chip" id="intensityChip">Rythme: 0 rep/min</span>
+        </div>
+      </div>
+      <div class="controls">
+        <select id="cameraSelect" aria-label="Choix de la camera">
+          <option value="user">Camera avant</option>
+          <option value="environment">Camera arriere</option>
+        </select>
+        <button id="startBtn" type="button">Demarrer webcam</button>
+        <button id="stopBtn" type="button" disabled>Arreter</button>
+        <button id="fullscreenBtn" type="button">Plein ecran</button>
+      </div>
+    </section>
+
+    <section class="card exercise-picker" aria-label="Selection exercice">
+      <button class="exercise-btn active" data-exercise="squat" type="button">Squat</button>
+      <button class="exercise-btn" data-exercise="pushup" type="button">Push-up</button>
+      <button class="exercise-btn" data-exercise="curl" type="button">Bicep Curl</button>
+    </section>
+
+    <section class="content-grid">
+      <section class="card stage-card" id="stageCard">
+        <div class="video-stage">
+          <div class="stage-viewport">
+            <video id="inputVideo" playsinline muted></video>
+            <canvas id="outputCanvas"></canvas>
+            <div class="video-grid-fx"></div>
+            <div class="stage-sheen"></div>
+            <div class="stage-vignette"></div>
+            <div class="frame-guide" aria-hidden="true"></div>
+            <div class="spark-field" id="sparkField"></div>
+            <div class="rep-pulse" id="repPulse">Rep validee</div>
+          </div>
+          <div class="badge-row">
+            <span class="badge" id="orientationBadge" data-state="warn">Orientation: -</span>
+            <span class="badge" id="framingBadge" data-state="warn">Cadrage: -</span>
+            <span class="badge" id="phaseBadge" data-state="warn">Phase: haut</span>
+            <span class="badge" id="fpsBadge">FPS: 0.0</span>
+          </div>
+          <div class="hud-bottom">
+            <div class="stage-insight">
+              <p class="stage-insight-label">Live Coach</p>
+              <p class="stage-insight-title" id="stageInsightTitle">Squat</p>
+              <p class="stage-insight-copy" id="stageInsightCopy">0 rep propre. Place-toi de profil puis lance une repetition.</p>
+            </div>
+            <div class="angle-widget">
+              <div class="angle-ring" id="angleRing">
+                <span id="angleRingValue">0%</span>
+              </div>
+              <div class="angle-copy">
+                <p class="angle-title" id="angleDepthLabel">Profondeur</p>
+                <p class="angle-hint" id="angleDepthHint">Descends pour lancer la rep.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="side-column">
+        <section class="card feedback-card neutral" id="feedbackCard">
+          <div class="coach-head">
+            <p class="coach-label"><span class="coach-dot neutral" id="coachDot"></span>Coach</p>
+          </div>
+          <p id="feedbackText">Clique sur "Demarrer webcam" pour lancer le coach.</p>
+          <p class="feedback-support" id="feedbackSupport">Place-toi au centre puis lance la webcam.</p>
+        </section>
+
+        <section class="card stats-panel">
+          <p class="panel-kicker">Performance</p>
+          <div class="stats-grid">
+            <article class="stat">
+              <div class="stat-label">Exercice</div>
+              <div class="stat-value" id="exerciseName">Squat</div>
+            </article>
+            <article class="stat">
+              <div class="stat-label">Etat Mouvement</div>
+              <div class="stat-value" id="movementState">haut</div>
+            </article>
+            <article class="stat">
+              <div class="stat-label">Reps Correctes</div>
+              <div class="stat-value" id="repsCorrect">0</div>
+            </article>
+            <article class="stat">
+              <div class="stat-label">Reps Totales</div>
+              <div class="stat-value" id="repsTotal">0</div>
+            </article>
+            <article class="stat">
+              <div class="stat-label">Reps Invalides</div>
+              <div class="stat-value" id="repsInvalid">0</div>
+            </article>
+            <article class="stat">
+              <div class="stat-label">Angle Principal</div>
+              <div class="stat-value" id="mainAngle">-</div>
+            </article>
+            <article class="stat">
+              <div class="stat-label">Streak Actuel</div>
+              <div class="stat-value" id="streakNow">x0</div>
+            </article>
+            <article class="stat">
+              <div class="stat-label">Meilleur Streak</div>
+              <div class="stat-value" id="streakBest">x0</div>
+            </article>
+            <article class="stat">
+              <div class="stat-label">Derniere Rep</div>
+              <div class="stat-value" id="lastRep">-</div>
+            </article>
+            <article class="stat">
+              <div class="stat-label">Rythme</div>
+              <div class="stat-value" id="repPace">0 rep/min</div>
+            </article>
+          </div>
+
+          <div class="quality-wrap">
+            <div class="quality-label" id="qualityLabel">Taux de reussite: 0.0%</div>
+            <div class="quality-track">
+              <div class="quality-fill" id="qualityFill"></div>
+            </div>
+          </div>
+
+          <p class="hints">
+            Conseils: mets-toi de profil pour une analyse plus fiable, garde tout le corps dans le cadre
+            et laisse un peu d'espace au-dessus de la tete.
+          </p>
+        </section>
+      </section>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+  <script>
+    const CONFIG = {
+      MODE_COULEUR_BINAIRE: true,
+      TARGET_POSE_FPS: 24,
+      SEUIL_FACE: 0.6,
+      SEUIL_PROFIL_HAUT: 0.7,
+      SEUIL_PROFIL_BAS: 0.3,
+      FENETRE_ORIENTATION: 8,
+      SEUIL_VISIBILITE_POINT: 0.25,
+      SEUIL_VISIBILITE_MIN_REP: 0.33,
+      SEUIL_VISIBILITE_MOY_REP: 0.45,
+      // Profil strict (profil par defaut dans la version Python)
+      SEUIL_VARIATION_ANGLE: 3.0,
+      SEUIL_FRAMES_INACTIVITE: 18,
+      MIN_FRAMES_PAR_REP: 8,
+      FRAMES_COOLDOWN_ENTRE_REPS: 4,
+      FRAMES_MAX_DONNEES_MANQUANTES_CYCLE: 3,
+      FRAMES_BASCULE_BAS: 2,
+      FRAMES_BASCULE_HAUT: 1,
+      HYSTERESIS_BAS: 3,
+      HYSTERESIS_HAUT: 2,
+      LISSAGE_ANGLE_ALPHA: 0.48,
+      LISSAGE_ALIGNEMENT_ALPHA: 0.45,
+      LISSAGE_DEPLACEMENT_ALPHA: 0.42,
+      FRAMES_RETENTION_FEEDBACK: 22,
+      INVALIDER_REP_SUR_PREMIERE_ERREUR: false,
+      BLOQUER_ORIENTATION_EXERCICE: true,
+      MESSAGE_ATTENTE: "Positionne-toi devant la camera.",
+      MESSAGE_ORIENTATION: "Place-toi de profil pour une detection fiable.",
+      MESSAGE_OK: "Super ! Continue.",
+      MESSAGE_PRET: "En position. Descends pour lancer la repetition.",
+      MESSAGE_INACTIVITE: "Pret. Lance une repetition complete.",
+      EXERCICES: {
+        squat: {
+          nom: "Squat",
+          orientations_valides: ["profil_gauche", "profil_droit"],
+          message_orientation_exercice: "Squat: mets-toi de profil pour une analyse fiable.",
+          seuil_haut: 155,
+          seuil_bas: 125,
+          angle_bas_valide: 88,
+          amplitude_min_cycle: 42,
+          angle_alignement_min_haut: 148,
+          angle_alignement_min_bas: 132,
+          deplacement_max: 0.58,
+        },
+        pushup: {
+          nom: "Push-up",
+          orientations_valides: ["profil_gauche", "profil_droit"],
+          message_orientation_exercice: "Push-up: mets-toi de profil pour une analyse fiable.",
+          seuil_haut: 155,
+          seuil_bas: 95,
+          angle_bas_valide: 86,
+          amplitude_min_cycle: 36,
+          angle_alignement_min: 164,
+          deplacement_max: 0.0,
+        },
+        curl: {
+          nom: "Bicep Curl",
+          orientations_valides: ["profil_gauche", "profil_droit"],
+          message_orientation_exercice: "Curl: mets-toi de profil pour une analyse fiable.",
+          seuil_haut: 150,
+          seuil_bas: 45,
+          angle_bas_valide: 32,
+          angle_haut_valide: 154,
+          amplitude_min_cycle: 62,
+          deplacement_max: 0.045,
+        },
+      },
+      COLORS: {
+        ok: "#00c853",
+        error: "#d50000",
+        neutral: "#ffab00",
+      },
+    };
+
+    const LANDMARK_INDEX = {
+      nose: 0,
+      left_shoulder: 11,
+      right_shoulder: 12,
+      left_elbow: 13,
+      right_elbow: 14,
+      left_wrist: 15,
+      right_wrist: 16,
+      left_hip: 23,
+      right_hip: 24,
+      left_knee: 25,
+      right_knee: 26,
+      left_ankle: 27,
+      right_ankle: 28,
+    };
+
+    const COACH_CONNECTIONS = [
+      [11, 12],
+      [11, 13],
+      [13, 15],
+      [12, 14],
+      [14, 16],
+      [11, 23],
+      [12, 24],
+      [23, 24],
+      [23, 25],
+      [25, 27],
+      [24, 26],
+      [26, 28],
+    ];
+
+    const COACH_LANDMARK_INDICES = [11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28];
+
+    const POINTS_VISIBILITE_COTE = {
+      left: ["left_shoulder", "left_hip", "left_knee", "left_ankle", "left_elbow", "left_wrist"],
+      right: ["right_shoulder", "right_hip", "right_knee", "right_ankle", "right_elbow", "right_wrist"],
+    };
+
+    class EtatExercice {
+      constructor() {
+        this.repetitions_totales = 0;
+        this.repetitions_correctes = 0;
+        this.repetitions_invalides = 0;
+        this.etat_mouvement = "haut";
+        this.cycle_actif = false;
+        this.mouvement_valide = true;
+        this.donnees_completes = true;
+        this.frames_cycle = 0;
+        this.frames_statiques = 0;
+        this.frames_donnees_manquantes_cycle = 0;
+        this.frames_message_prioritaire = 0;
+        this.frames_bas_consecutifs = 0;
+        this.frames_haut_consecutifs = 0;
+        this.frames_cooldown_rep = 0;
+        this.dernier_angle_principal = null;
+        this.angle_principal_filtre = null;
+        this.angle_alignement_filtre = null;
+        this.deplacement_filtre = 0;
+        this.angle_min_cycle = Number.POSITIVE_INFINITY;
+        this.angle_max_cycle = 0;
+        this.alignement_min_cycle = Number.POSITIVE_INFINITY;
+        this.deplacement_max_cycle = 0;
+        this.position_epaule_reference = null;
+        this.dernier_message = CONFIG.MESSAGE_ATTENTE;
+      }
+    }
+
+    class ExerciseAnalyzer {
+      constructor() {
+        this.exerciceActuel = "squat";
+        this.etats = {};
+        for (const nomExercice of Object.keys(CONFIG.EXERCICES)) {
+          this.etats[nomExercice] = new EtatExercice();
+        }
+      }
+
+      changerExercice(nouvelExercice) {
+        if (!CONFIG.EXERCICES[nouvelExercice]) return;
+        this.exerciceActuel = nouvelExercice;
+        const etat = this.etats[nouvelExercice];
+        if (etat.dernier_message === CONFIG.MESSAGE_ATTENTE) {
+          etat.dernier_message = `Exercice actif: ${CONFIG.EXERCICES[nouvelExercice].nom}`;
+        }
+      }
+
+      tauxReussite(total, correctes) {
+        if (total <= 0) return 0;
+        return (correctes / total) * 100;
+      }
+
+      angleAlignementSquat(epaule, hanche) {
+        if (!epaule || !hanche) return null;
+        const vecteurX = epaule.x - hanche.x;
+        const vecteurY = epaule.y - hanche.y;
+        const norme = Math.hypot(vecteurX, vecteurY);
+        if (norme <= 1e-6) return null;
+        const cosinus = clamp((-vecteurY) / norme, -1, 1);
+        const inclinaison = radiansToDegrees(Math.acos(cosinus));
+        return 180 - inclinaison;
+      }
+
+      deplacementGenouNormalise(genou, cheville) {
+        if (!genou || !cheville) return 0;
+        const longueurTibia = distance2d(genou, cheville);
+        if (longueurTibia <= 1e-6) return 0;
+        return Math.abs(genou.x - cheville.x) / longueurTibia;
+      }
+
+      seuilAlignementSquat(regles, angleGenou) {
+        const seuilHaut = Number(regles.angle_alignement_min_haut);
+        const seuilBas = Number(regles.angle_alignement_min_bas);
+        if (angleGenou == null) return seuilHaut;
+
+        const angleHaut = Number(regles.seuil_haut);
+        const angleBas = Number(regles.angle_bas_valide);
+        const denominateur = Math.max(angleHaut - angleBas, 1);
+        let progression = (angleHaut - angleGenou) / denominateur;
+        progression = clamp(progression, 0, 1);
+        return seuilHaut - progression * (seuilHaut - seuilBas);
+      }
+
+      lisserMesure(precedent, valeur, alpha) {
+        if (valeur == null || Number.isNaN(valeur)) return null;
+        if (precedent == null || Number.isNaN(precedent)) return valeur;
+        return precedent + alpha * (valeur - precedent);
+      }
+
+      lisserMesures(etat, anglePrincipal, angleAlignement, deplacement) {
+        etat.angle_principal_filtre = this.lisserMesure(
+          etat.angle_principal_filtre,
+          anglePrincipal,
+          CONFIG.LISSAGE_ANGLE_ALPHA
+        );
+        etat.angle_alignement_filtre = this.lisserMesure(
+          etat.angle_alignement_filtre,
+          angleAlignement,
+          CONFIG.LISSAGE_ALIGNEMENT_ALPHA
+        );
+
+        if (deplacement == null || Number.isNaN(deplacement)) {
+          etat.deplacement_filtre = 0;
+        } else if (Number.isFinite(etat.deplacement_filtre)) {
+          etat.deplacement_filtre += CONFIG.LISSAGE_DEPLACEMENT_ALPHA * (deplacement - etat.deplacement_filtre);
+        } else {
+          etat.deplacement_filtre = deplacement;
+        }
+
+        return [etat.angle_principal_filtre, etat.angle_alignement_filtre, etat.deplacement_filtre];
+      }
+
+      resetFiltres(etat) {
+        etat.angle_principal_filtre = null;
+        etat.angle_alignement_filtre = null;
+        etat.deplacement_filtre = 0;
+      }
+
+      evaluerQualitePoints(nomExercice, pointsCorps) {
+        const pointsParExercice = {
+          squat: ["epaule", "hanche", "genou", "cheville"],
+          pushup: ["epaule", "coude", "poignet", "hanche", "cheville"],
+          curl: ["epaule", "coude", "poignet"],
+        };
+
+        const noms = pointsParExercice[nomExercice] || [];
+        const visibilites = noms.map((nom) => {
+          const point = pointsCorps[nom];
+          return point && Number.isFinite(point.visibilite) ? point.visibilite : 0;
+        });
+
+        if (!visibilites.length) {
+          return { ok: false, message: "Points de pose indisponibles. Reajuste ton cadrage." };
+        }
+
+        const minimum = Math.min(...visibilites);
+        const moyenne = visibilites.reduce((somme, valeur) => somme + valeur, 0) / visibilites.length;
+
+        if (minimum < CONFIG.SEUIL_VISIBILITE_MIN_REP || moyenne < CONFIG.SEUIL_VISIBILITE_MOY_REP) {
+          if (nomExercice === "squat") {
+            return {
+              ok: false,
+              message: "Squat: hanche/genou/cheville mal visibles. Recule et reste bien de profil.",
+            };
+          }
+          if (nomExercice === "pushup") {
+            return {
+              ok: false,
+              message: "Push-up: bras ou jambes mal detectes. Place la camera de cote et montre tout le corps.",
+            };
+          }
+          return {
+            ok: false,
+            message: "Curl: epaule/coude/poignet mal visibles. Cadre le haut du corps de profil.",
+          };
+        }
+
+        return { ok: true, minimum, moyenne };
+      }
+
+      resetCycle(etat) {
+        etat.cycle_actif = false;
+        etat.mouvement_valide = true;
+        etat.donnees_completes = true;
+        etat.frames_cycle = 0;
+        etat.frames_donnees_manquantes_cycle = 0;
+        etat.frames_bas_consecutifs = 0;
+        etat.frames_haut_consecutifs = 0;
+        etat.angle_min_cycle = Number.POSITIVE_INFINITY;
+        etat.angle_max_cycle = 0;
+        etat.alignement_min_cycle = Number.POSITIVE_INFINITY;
+        etat.deplacement_max_cycle = 0;
+        etat.position_epaule_reference = null;
+      }
+
+      demarrerCycle(etat, anglePrincipal, angleAlignement, deplacement, pointEpaule) {
+        etat.cycle_actif = true;
+        etat.mouvement_valide = true;
+        etat.donnees_completes = true;
+        etat.frames_cycle = 0;
+        etat.frames_donnees_manquantes_cycle = 0;
+        etat.angle_min_cycle = anglePrincipal != null ? anglePrincipal : Number.POSITIVE_INFINITY;
+        etat.angle_max_cycle = anglePrincipal != null ? anglePrincipal : 0;
+        etat.alignement_min_cycle = angleAlignement != null ? angleAlignement : Number.POSITIVE_INFINITY;
+        etat.deplacement_max_cycle = deplacement;
+        etat.position_epaule_reference = pointEpaule || null;
+
+        if (anglePrincipal == null || angleAlignement == null) {
+          etat.frames_donnees_manquantes_cycle = 1;
+          if (etat.frames_donnees_manquantes_cycle > CONFIG.FRAMES_MAX_DONNEES_MANQUANTES_CYCLE) {
+            etat.donnees_completes = false;
+          }
+        }
+      }
+
+      construireRetour(etat, estCorrect, message, anglePrincipal, niveauFeedback) {
+        return {
+          est_correct: estCorrect,
+          niveau_feedback: niveauFeedback,
+          message,
+          angle_principal: anglePrincipal,
+          repetitions_totales: etat.repetitions_totales,
+          repetitions_correctes: etat.repetitions_correctes,
+          repetitions_invalides: etat.repetitions_invalides,
+          taux_reussite: this.tauxReussite(etat.repetitions_totales, etat.repetitions_correctes),
+        };
+      }
+
+      mettreAJourInactivite(etat, anglePrincipal) {
+        if (anglePrincipal == null) {
+          etat.frames_statiques = 0;
+          etat.dernier_angle_principal = null;
+          return;
+        }
+
+        if (etat.dernier_angle_principal == null) {
+          etat.frames_statiques = 0;
+          etat.dernier_angle_principal = anglePrincipal;
+          return;
+        }
+
+        if (Math.abs(anglePrincipal - etat.dernier_angle_principal) < CONFIG.SEUIL_VARIATION_ANGLE) {
+          etat.frames_statiques += 1;
+        } else {
+          etat.frames_statiques = 0;
+        }
+        etat.dernier_angle_principal = anglePrincipal;
+      }
+
+      mettreAJourCycle(etat, anglePrincipal, angleAlignement, deplacement) {
+        if (!etat.cycle_actif) return;
+        etat.frames_cycle += 1;
+
+        if (anglePrincipal == null || angleAlignement == null) {
+          etat.frames_donnees_manquantes_cycle += 1;
+          if (etat.frames_donnees_manquantes_cycle > CONFIG.FRAMES_MAX_DONNEES_MANQUANTES_CYCLE) {
+            etat.donnees_completes = false;
+          }
+        }
+
+        if (anglePrincipal == null) {
+          // Tolere quelques frames manquantes au sein d'une rep.
+        } else {
+          etat.angle_min_cycle = Math.min(etat.angle_min_cycle, anglePrincipal);
+          etat.angle_max_cycle = Math.max(etat.angle_max_cycle, anglePrincipal);
+        }
+
+        if (angleAlignement == null) {
+          // Tolere quelques frames manquantes au sein d'une rep.
+        } else {
+          etat.alignement_min_cycle = Math.min(etat.alignement_min_cycle, angleAlignement);
+        }
+
+        etat.deplacement_max_cycle = Math.max(etat.deplacement_max_cycle, deplacement);
+      }
+
+      validerCycle(nomExercice, etat) {
+        const regles = CONFIG.EXERCICES[nomExercice];
+
+        if (!etat.mouvement_valide) {
+          return [false, etat.dernier_message];
+        }
+        if (!etat.donnees_completes) {
+          return [false, "Rep non comptee: detection instable, ajuste le cadrage."];
+        }
+
+        if (etat.frames_donnees_manquantes_cycle > CONFIG.FRAMES_MAX_DONNEES_MANQUANTES_CYCLE) {
+          return [false, "Rep non comptee: trop de frames perdues pendant le mouvement."];
+        }
+
+        if (etat.frames_cycle < CONFIG.MIN_FRAMES_PAR_REP) {
+          return [false, "Mouvement trop rapide: ralentis pour une rep propre."];
+        }
+
+        const amplitudeCycle = etat.angle_max_cycle - etat.angle_min_cycle;
+        const amplitudeMinToleree = Math.max(8, regles.amplitude_min_cycle - 2);
+        if (amplitudeCycle < amplitudeMinToleree) {
+          return [false, "Amplitude insuffisante: va plus loin sur toute la trajectoire."];
+        }
+
+        if (nomExercice === "squat") {
+          if (etat.angle_min_cycle > regles.angle_bas_valide + 1) {
+            return [false, "Squat incomplet: descends plus bas."];
+          }
+          if (etat.alignement_min_cycle < regles.angle_alignement_min_bas - 2) {
+            return [false, "Squat: buste trop penche, reste gaine."];
+          }
+          if (etat.deplacement_max_cycle > regles.deplacement_max + 0.04) {
+            return [false, "Squat: genoux trop en avant, pousse les hanches vers l'arriere."];
+          }
+          return [true, "Bonne profondeur !"];
+        }
+
+        if (nomExercice === "pushup") {
+          if (etat.angle_min_cycle > regles.angle_bas_valide + 1) {
+            return [false, "Push-up incomplet: descends davantage."];
+          }
+          if (etat.alignement_min_cycle < regles.angle_alignement_min - 2) {
+            return [false, "Push-up: corps pas aligne, verrouille le gainage."];
+          }
+          return [true, "Push-up valide !"];
+        }
+
+        if (etat.angle_min_cycle > regles.angle_bas_valide + 1) {
+          return [false, "Curl: amplitude trop faible, monte plus haut."];
+        }
+        if (etat.angle_max_cycle < regles.angle_haut_valide - 8) {
+          return [false, "Curl: retends davantage le bras en bas."];
+        }
+        if (etat.deplacement_max_cycle > regles.deplacement_max + 0.01) {
+          return [false, "Curl: epaule trop mobile, garde le coude fixe."];
+        }
+        return [true, "Bicep curl valide !"];
+      }
+
+      analyserSquat(_etat, pointsCorps) {
+        const epaule = pointsCorps.epaule;
+        const hanche = pointsCorps.hanche;
+        const genou = pointsCorps.genou;
+        const cheville = pointsCorps.cheville;
+
+        const angleGenou = calculerAngle(hanche, genou, cheville);
+        const angleDos = this.angleAlignementSquat(epaule, hanche);
+        const deplacementGenou = this.deplacementGenouNormalise(genou, cheville);
+
+        if (angleGenou == null) {
+          return [false, "Squat: genou mal detecte. Place-toi de profil avec les jambes visibles.", null, angleDos, deplacementGenou];
+        }
+
+        const regles = CONFIG.EXERCICES.squat;
+        const seuilAlignement = this.seuilAlignementSquat(regles, angleGenou);
+
+        if (angleGenou <= regles.seuil_bas) {
+          if (angleGenou >= regles.angle_bas_valide) {
+            return [false, "Squat: descends plus bas en gardant les talons au sol.", angleGenou, angleDos, deplacementGenou];
+          }
+          if (angleDos != null && angleDos < seuilAlignement) {
+            return [false, "Squat: buste trop penche. Gaine et ouvre la poitrine.", angleGenou, angleDos, deplacementGenou];
+          }
+          if (deplacementGenou > regles.deplacement_max) {
+            return [false, "Squat: genou trop en avant. Recule les hanches en descendant.", angleGenou, angleDos, deplacementGenou];
+          }
+          return [true, "Bonne profondeur !", angleGenou, angleDos, deplacementGenou];
+        }
+
+        if (angleDos != null && angleDos < regles.angle_alignement_min_bas - 5) {
+          return [false, "Squat: redresse le dos et garde le regard devant.", angleGenou, angleDos, deplacementGenou];
+        }
+
+        return [true, CONFIG.MESSAGE_OK, angleGenou, angleDos, deplacementGenou];
+      }
+
+      analyserPushup(_etat, pointsCorps) {
+        const epaule = pointsCorps.epaule;
+        const coude = pointsCorps.coude;
+        const poignet = pointsCorps.poignet;
+        const hanche = pointsCorps.hanche;
+        const cheville = pointsCorps.cheville;
+
+        const angleCoude = calculerAngle(epaule, coude, poignet);
+        const angleCorps = calculerAngle(epaule, hanche, cheville);
+
+        if (angleCoude == null) {
+          return [false, "Push-up: coude mal detecte. Place la camera de profil.", null, angleCorps, 0];
+        }
+
+        const regles = CONFIG.EXERCICES.pushup;
+        if (angleCoude <= regles.seuil_bas) {
+          if (angleCoude >= regles.angle_bas_valide) {
+            return [false, "Push-up: descends davantage, poitrine proche du sol.", angleCoude, angleCorps, 0];
+          }
+          if (angleCorps != null && angleCorps < regles.angle_alignement_min) {
+            return [false, "Push-up: corps casse. Garde epaule-hanche-cheville alignees.", angleCoude, angleCorps, 0];
+          }
+          return [true, "Bonne descente !", angleCoude, angleCorps, 0];
+        }
+
+        if (angleCorps != null && angleCorps < regles.angle_alignement_min) {
+          return [false, "Push-up: verrouille le gainage pour rester aligne.", angleCoude, angleCorps, 0];
+        }
+
+        return [true, CONFIG.MESSAGE_OK, angleCoude, angleCorps, 0];
+      }
+
+      analyserCurl(etat, pointsCorps) {
+        const epaule = pointsCorps.epaule;
+        const coude = pointsCorps.coude;
+        const poignet = pointsCorps.poignet;
+
+        const angleCoude = calculerAngle(epaule, coude, poignet);
+        let deplacementEpaule = 0;
+        if (etat.position_epaule_reference && epaule) {
+          deplacementEpaule = distance2d(epaule, etat.position_epaule_reference);
+        }
+
+        if (angleCoude == null) {
+          return [false, "Curl: bras mal detecte. Rapproche-toi et garde le coude visible.", null, null, deplacementEpaule];
+        }
+
+        const regles = CONFIG.EXERCICES.curl;
+        if (deplacementEpaule > regles.deplacement_max) {
+          return [false, "Curl: epaule qui bouge. Garde le coude fixe contre le buste.", angleCoude, angleCoude, deplacementEpaule];
+        }
+
+        if (angleCoude <= regles.seuil_bas) {
+          if (angleCoude > regles.angle_bas_valide) {
+            return [false, "Curl: monte encore la main vers l'epaule.", angleCoude, angleCoude, deplacementEpaule];
+          }
+          return [true, "Bonne contraction !", angleCoude, angleCoude, deplacementEpaule];
+        }
+
+        return [true, CONFIG.MESSAGE_OK, angleCoude, angleCoude, deplacementEpaule];
+      }
+
+      analyser(pointsCorps, orientation) {
+        const etat = this.etats[this.exerciceActuel];
+        const regles = CONFIG.EXERCICES[this.exerciceActuel];
+
+        if (etat.frames_message_prioritaire > 0) {
+          etat.frames_message_prioritaire -= 1;
+        }
+
+        if (etat.frames_cooldown_rep > 0) {
+          etat.frames_cooldown_rep -= 1;
+        }
+
+        if (orientation === "inconnue" || orientation === "incertaine") {
+          if (etat.cycle_actif) etat.donnees_completes = false;
+          etat.frames_statiques = 0;
+          etat.dernier_angle_principal = null;
+          etat.frames_bas_consecutifs = 0;
+          etat.frames_haut_consecutifs = 0;
+          this.resetFiltres(etat);
+          etat.dernier_message = CONFIG.MESSAGE_ORIENTATION;
+          return this.construireRetour(etat, false, etat.dernier_message, null, "neutre");
+        }
+
+        if (!pointsCorps || Object.keys(pointsCorps).length === 0) {
+          if (etat.cycle_actif) etat.donnees_completes = false;
+          etat.frames_statiques = 0;
+          etat.dernier_angle_principal = null;
+          etat.frames_bas_consecutifs = 0;
+          etat.frames_haut_consecutifs = 0;
+          this.resetFiltres(etat);
+          etat.dernier_message = CONFIG.MESSAGE_ATTENTE;
+          return this.construireRetour(etat, false, etat.dernier_message, null, "neutre");
+        }
+
+        const orientationsValides = regles.orientations_valides;
+        if (
+          CONFIG.BLOQUER_ORIENTATION_EXERCICE &&
+          orientationsValides &&
+          !orientationsValides.includes(orientation)
+        ) {
+          if (etat.cycle_actif) etat.donnees_completes = false;
+          etat.frames_bas_consecutifs = 0;
+          etat.frames_haut_consecutifs = 0;
+          this.resetFiltres(etat);
+          etat.dernier_message = regles.message_orientation_exercice || CONFIG.MESSAGE_ORIENTATION;
+          return this.construireRetour(etat, false, etat.dernier_message, null, "neutre");
+        }
+
+        const qualitePoints = this.evaluerQualitePoints(this.exerciceActuel, pointsCorps);
+        if (!qualitePoints.ok) {
+          if (etat.cycle_actif) {
+            etat.frames_donnees_manquantes_cycle += 1;
+            if (etat.frames_donnees_manquantes_cycle > CONFIG.FRAMES_MAX_DONNEES_MANQUANTES_CYCLE) {
+              etat.donnees_completes = false;
+            }
+          }
+          etat.frames_statiques = 0;
+          etat.dernier_angle_principal = null;
+          this.resetFiltres(etat);
+          etat.dernier_message = qualitePoints.message;
+          return this.construireRetour(etat, false, etat.dernier_message, null, "neutre");
+        }
+
+        let estCorrect;
+        let message;
+        let anglePrincipal;
+        let angleAlignement;
+        let deplacement;
+
+        if (this.exerciceActuel === "squat") {
+          [estCorrect, message, anglePrincipal, angleAlignement, deplacement] = this.analyserSquat(etat, pointsCorps);
+        } else if (this.exerciceActuel === "pushup") {
+          [estCorrect, message, anglePrincipal, angleAlignement, deplacement] = this.analyserPushup(etat, pointsCorps);
+        } else {
+          [estCorrect, message, anglePrincipal, angleAlignement, deplacement] = this.analyserCurl(etat, pointsCorps);
+        }
+
+        [anglePrincipal, angleAlignement, deplacement] = this.lisserMesures(
+          etat,
+          anglePrincipal,
+          angleAlignement,
+          deplacement
+        );
+
+        const pointEpaule = pointsCorps.epaule;
+        let feedbackNiveau = estCorrect ? "ok" : "erreur";
+
+        if (!estCorrect) {
+          etat.dernier_message = message;
+          if (CONFIG.INVALIDER_REP_SUR_PREMIERE_ERREUR && etat.cycle_actif) {
+            etat.mouvement_valide = false;
+          }
+          if (anglePrincipal == null && etat.cycle_actif) {
+            etat.frames_donnees_manquantes_cycle += 1;
+            if (etat.frames_donnees_manquantes_cycle > CONFIG.FRAMES_MAX_DONNEES_MANQUANTES_CYCLE) {
+              etat.donnees_completes = false;
+            }
+          }
+        }
+
+        this.mettreAJourInactivite(etat, anglePrincipal);
+
+        if (anglePrincipal != null) {
+          const seuilBasDeclenchement = regles.seuil_bas - CONFIG.HYSTERESIS_BAS;
+          const seuilHautValidation = regles.seuil_haut + CONFIG.HYSTERESIS_HAUT;
+
+          if (etat.etat_mouvement === "haut") {
+            if (anglePrincipal <= seuilBasDeclenchement) {
+              etat.frames_bas_consecutifs += 1;
+            } else {
+              etat.frames_bas_consecutifs = 0;
+            }
+
+            if (
+              etat.frames_bas_consecutifs >= CONFIG.FRAMES_BASCULE_BAS &&
+              etat.frames_cooldown_rep <= 0
+            ) {
+              etat.etat_mouvement = "bas";
+              this.demarrerCycle(etat, anglePrincipal, angleAlignement, deplacement, pointEpaule);
+              etat.frames_bas_consecutifs = 0;
+              etat.frames_haut_consecutifs = 0;
+            }
+          }
+
+          this.mettreAJourCycle(etat, anglePrincipal, angleAlignement, deplacement);
+
+          if (etat.etat_mouvement === "bas") {
+            if (anglePrincipal >= seuilHautValidation) {
+              etat.frames_haut_consecutifs += 1;
+            } else {
+              etat.frames_haut_consecutifs = 0;
+            }
+
+            if (etat.frames_haut_consecutifs >= CONFIG.FRAMES_BASCULE_HAUT && etat.cycle_actif) {
+              etat.etat_mouvement = "haut";
+              etat.repetitions_totales += 1;
+              const [repetitionValide, messageRepetition] = this.validerCycle(this.exerciceActuel, etat);
+              if (repetitionValide) {
+                etat.repetitions_correctes += 1;
+              } else {
+                etat.repetitions_invalides += 1;
+                estCorrect = false;
+                feedbackNiveau = "erreur";
+              }
+              message = messageRepetition;
+              etat.frames_message_prioritaire = CONFIG.FRAMES_RETENTION_FEEDBACK;
+              etat.frames_cooldown_rep = CONFIG.FRAMES_COOLDOWN_ENTRE_REPS;
+              this.resetCycle(etat);
+            }
+          }
+        } else if (etat.cycle_actif) {
+          etat.frames_donnees_manquantes_cycle += 1;
+          if (etat.frames_donnees_manquantes_cycle > CONFIG.FRAMES_MAX_DONNEES_MANQUANTES_CYCLE) {
+            etat.donnees_completes = false;
+          }
+        }
+
+        if (
+          feedbackNiveau === "ok" &&
+          etat.frames_message_prioritaire <= 0 &&
+          !etat.cycle_actif &&
+          etat.etat_mouvement === "haut"
+        ) {
+          feedbackNiveau = "neutre";
+          estCorrect = false;
+          message = etat.frames_statiques >= CONFIG.SEUIL_FRAMES_INACTIVITE
+            ? CONFIG.MESSAGE_INACTIVITE
+            : CONFIG.MESSAGE_PRET;
+        }
+
+        etat.dernier_message = message;
+        return this.construireRetour(etat, estCorrect, message, anglePrincipal, feedbackNiveau);
+      }
+
+      obtenirStatsExerciceActuel() {
+        const etat = this.etats[this.exerciceActuel];
+        return {
+          nom_exercice: CONFIG.EXERCICES[this.exerciceActuel].nom,
+          repetitions_totales: etat.repetitions_totales,
+          repetitions_correctes: etat.repetitions_correctes,
+          repetitions_invalides: etat.repetitions_invalides,
+          taux_reussite: this.tauxReussite(etat.repetitions_totales, etat.repetitions_correctes),
+          etat_mouvement: etat.etat_mouvement,
+        };
+      }
+    }
+
+    const videoEl = document.getElementById("inputVideo");
+    const videoStageEl = document.querySelector(".video-stage");
+    const canvasEl = document.getElementById("outputCanvas");
+    const canvasCtx = canvasEl.getContext("2d");
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const fullscreenBtn = document.getElementById("fullscreenBtn");
+    const cameraSelect = document.getElementById("cameraSelect");
+    const exerciseButtons = Array.from(document.querySelectorAll(".exercise-btn"));
+    const stageCard = document.getElementById("stageCard");
+    const feedbackCard = document.getElementById("feedbackCard");
+    const feedbackText = document.getElementById("feedbackText");
+    const feedbackSupportEl = document.getElementById("feedbackSupport");
+    const coachDotEl = document.getElementById("coachDot");
+    const orientationBadge = document.getElementById("orientationBadge");
+    const framingBadge = document.getElementById("framingBadge");
+    const phaseBadge = document.getElementById("phaseBadge");
+    const fpsBadge = document.getElementById("fpsBadge");
+    const repPulseEl = document.getElementById("repPulse");
+    const sparkField = document.getElementById("sparkField");
+    const angleRingEl = document.getElementById("angleRing");
+    const angleRingValueEl = document.getElementById("angleRingValue");
+    const angleDepthLabelEl = document.getElementById("angleDepthLabel");
+    const angleDepthHintEl = document.getElementById("angleDepthHint");
+    const stageInsightTitleEl = document.getElementById("stageInsightTitle");
+    const stageInsightCopyEl = document.getElementById("stageInsightCopy");
+    const exerciseNameEl = document.getElementById("exerciseName");
+    const movementStateEl = document.getElementById("movementState");
+    const repsCorrectEl = document.getElementById("repsCorrect");
+    const repsTotalEl = document.getElementById("repsTotal");
+    const repsInvalidEl = document.getElementById("repsInvalid");
+    const mainAngleEl = document.getElementById("mainAngle");
+    const streakNowEl = document.getElementById("streakNow");
+    const streakBestEl = document.getElementById("streakBest");
+    const lastRepEl = document.getElementById("lastRep");
+    const repPaceEl = document.getElementById("repPace");
+    const sessionChipEl = document.getElementById("sessionChip");
+    const streakChipEl = document.getElementById("streakChip");
+    const intensityChipEl = document.getElementById("intensityChip");
+    const qualityLabelEl = document.getElementById("qualityLabel");
+    const qualityFillEl = document.getElementById("qualityFill");
+
+    const analyzer = new ExerciseAnalyzer();
+
+    let pose = null;
+    let mediaStream = null;
+    let running = false;
+    let loopRequest = null;
+    let processingFrame = false;
+    let lastFpsTime = 0;
+    let lastPoseProcessMs = 0;
+    let orientationHistory = [];
+    let currentFeedbackColor = CONFIG.COLORS.neutral;
+    let fpsWindow = [];
+    let sessionStartMs = 0;
+    let lastRepPulseTimeout = null;
+    let videoFrameCallbackId = null;
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const trackersParExercice = Object.fromEntries(
+      Object.keys(CONFIG.EXERCICES).map((nom) => [nom, { total: 0, correct: 0, streak: 0, best: 0, last: "-" }])
+    );
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function radiansToDegrees(radians) {
+      return radians * (180 / Math.PI);
+    }
+
+    function distance2d(pointA, pointB) {
+      if (!pointA || !pointB) return 0;
+      return Math.hypot(pointA.x - pointB.x, pointA.y - pointB.y);
+    }
+
+    function calculerAngle(pointA, pointB, pointC) {
+      if (!pointA || !pointB || !pointC) return null;
+      try {
+        const radians = Math.atan2(pointC.y - pointB.y, pointC.x - pointB.x) -
+          Math.atan2(pointA.y - pointB.y, pointA.x - pointB.x);
+        let angle = Math.abs(radiansToDegrees(radians));
+        if (angle > 180) angle = 360 - angle;
+        return angle;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function formatDuree(seconds) {
+      const sec = Math.max(0, Math.floor(seconds));
+      const minutes = Math.floor(sec / 60);
+      const reste = sec % 60;
+      return `${String(minutes).padStart(2, "0")}:${String(reste).padStart(2, "0")}`;
+    }
+
+    function tempsSessionSec() {
+      if (!running || !sessionStartMs) return 0;
+      return (performance.now() - sessionStartMs) / 1000;
+    }
+
+    function cadenceRepParMinute(repsTotal) {
+      const duree = tempsSessionSec();
+      if (duree <= 0 || repsTotal <= 0) return 0;
+      return (repsTotal / duree) * 60;
+    }
+
+    function getCameraConstraints() {
+      const facingMode = cameraSelect.value;
+      const tactile = window.matchMedia("(pointer: coarse)").matches;
+      const portrait = window.matchMedia("(orientation: portrait)").matches;
+
+      if (tactile && portrait) {
+        return {
+          facingMode: { ideal: facingMode },
+          width: { ideal: 720 },
+          height: { ideal: 1280 },
+          aspectRatio: { ideal: 9 / 16 },
+          frameRate: { ideal: 30, max: 30 },
+        };
+      }
+
+      if (tactile) {
+        return {
+          facingMode: { ideal: facingMode },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          aspectRatio: { ideal: 16 / 9 },
+          frameRate: { ideal: 30, max: 30 },
+        };
+      }
+
+      return {
+        facingMode: { ideal: facingMode },
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+        aspectRatio: { ideal: 16 / 9 },
+        frameRate: { ideal: 30, max: 30 },
+      };
+    }
+
+    function setStageRatio(width, height) {
+      if (!width || !height) return;
+      videoStageEl.style.setProperty("--stage-ratio", `${width} / ${height}`);
+    }
+
+    function evaluerCadrage(pointsPose) {
+      if (!pointsPose || Object.keys(pointsPose).length === 0) {
+        return {
+          label: "non detecte",
+          state: "error",
+          phrase: "Place tout le corps dans le cadre pour lancer l'analyse.",
+        };
+      }
+
+      const pointsVisibles = Object.values(pointsPose).filter((point) => point && point.visibilite >= 0.3);
+      if (pointsVisibles.length < 5) {
+        return {
+          label: "instable",
+          state: "error",
+          phrase: "Recule legerement ou ajoute de la lumiere pour stabiliser la pose.",
+        };
+      }
+
+      const xValues = pointsVisibles.map((point) => point.x);
+      const yValues = pointsVisibles.map((point) => point.y);
+      const minX = Math.min(...xValues);
+      const maxX = Math.max(...xValues);
+      const minY = Math.min(...yValues);
+      const maxY = Math.max(...yValues);
+      const nose = pointsPose.nose;
+      const anklesVisible = Boolean(
+        (pointsPose.left_ankle && pointsPose.left_ankle.visibilite >= 0.3) ||
+        (pointsPose.right_ankle && pointsPose.right_ankle.visibilite >= 0.3)
+      );
+
+      if (!anklesVisible || maxY > 0.98) {
+        return {
+          label: "jambes coupees",
+          state: "error",
+          phrase: "Recule un peu pour faire entrer les jambes et les chevilles.",
+        };
+      }
+
+      if (nose && nose.visibilite >= 0.3 && nose.y < 0.04) {
+        return {
+          label: "tete trop haute",
+          state: "warn",
+          phrase: "Baisse legerement la camera ou recule pour garder la tete visible.",
+        };
+      }
+
+      if (minX < 0.03 || maxX > 0.97) {
+        return {
+          label: "trop serre",
+          state: "warn",
+          phrase: "Recentre-toi: laisse un peu d'air sur les cotes du corps.",
+        };
+      }
+
+      if (maxY > 0.94 || minY < 0.03) {
+        return {
+          label: "ajuster cadre",
+          state: "warn",
+          phrase: "Garde un peu d'espace au-dessus de la tete et sous les pieds.",
+        };
+      }
+
+      return {
+        label: "optimal",
+        state: "good",
+        phrase: "Cadre propre: tout le corps est bien lisible.",
+      };
+    }
+
+    function messageSecondaire(orientationEtat, cadrage, retourAnalyse) {
+      const exercice = analyzer.exerciceActuel;
+      const phase = analyzer.obtenirStatsExerciceActuel().etat_mouvement;
+      if (cadrage.state !== "good") return cadrage.phrase;
+      if (orientationEtat.state !== "good") return orientationEtat.phrase;
+      if (retourAnalyse.niveau_feedback === "erreur") {
+        return `${retourAnalyse.message} ${consigneExercice(exercice, phase)}`;
+      }
+      if (retourAnalyse.niveau_feedback === "ok") {
+        return `Mouvement propre. ${consigneExercice(exercice, phase)}`;
+      }
+      return `Cadre stable et analyse lisible. ${consigneExercice(exercice, phase)}`;
+    }
+
+    function couleurEtEtatOrientation(orientation) {
+      if (orientation === "profil_gauche" || orientation === "profil_droit") {
+        return { state: "good", phrase: "Orientation optimale" };
+      }
+      if (orientation === "face") {
+        return { state: "warn", phrase: "Passe de profil pour plus de precision" };
+      }
+      return { state: "error", phrase: "Detection instable" };
+    }
+
+    function progressionAngle(exercice, anglePrincipal) {
+      if (anglePrincipal == null) return 0;
+      const regles = CONFIG.EXERCICES[exercice];
+      const amplitude = Math.max(10, regles.seuil_haut - regles.seuil_bas);
+      return clamp((regles.seuil_haut - anglePrincipal) / amplitude, 0, 1);
+    }
+
+    function texteProgression(exercice) {
+      if (exercice === "squat") return "Profondeur squat";
+      if (exercice === "pushup") return "Profondeur push-up";
+      return "Contraction curl";
+    }
+
+    function consigneExercice(exercice, phase) {
+      if (exercice === "squat") {
+        return phase === "bas"
+          ? "Remonte en gardant le buste gainé et les genoux stables."
+          : "Envoie les hanches en arriere puis descends avec controle.";
+      }
+      if (exercice === "pushup") {
+        return phase === "bas"
+          ? "Pousse d'un seul bloc, corps bien aligne jusqu'en haut."
+          : "Descends poitrine vers le sol sans casser la ligne du corps.";
+      }
+      return phase === "bas"
+        ? "Controle la redescente et retends le bras sans bouger l'epaule."
+        : "Garde le coude fixe et enroule l'avant-bras proprement.";
+    }
+
+    function setRingVisual(progress, color) {
+      angleRingEl.style.setProperty("--ring-progress", `${(progress * 100).toFixed(1)}%`);
+      angleRingEl.style.setProperty("--ring-color", color);
+      angleRingValueEl.textContent = `${Math.round(progress * 100)}%`;
+    }
+
+    function vibrerSiPossible(pattern) {
+      if (!("vibrate" in navigator) || prefersReducedMotion) return;
+      try {
+        navigator.vibrate(pattern);
+      } catch (_) {
+        // Aucune action: certains navigateurs ignorent silencieusement.
+      }
+    }
+
+    function showRepPulse(estCorrect, numeroRep) {
+      if (lastRepPulseTimeout) {
+        window.clearTimeout(lastRepPulseTimeout);
+      }
+      repPulseEl.classList.remove("show", "good", "bad");
+      repPulseEl.textContent = estCorrect ? `Rep ${numeroRep} validee` : `Rep ${numeroRep} invalide`;
+      repPulseEl.classList.add(estCorrect ? "good" : "bad");
+      // Force reflow pour relancer l'animation a chaque rep.
+      void repPulseEl.offsetWidth;
+      repPulseEl.classList.add("show");
+
+      stageCard.classList.remove("flash-good", "flash-bad");
+      void stageCard.offsetWidth;
+      stageCard.classList.add(estCorrect ? "flash-good" : "flash-bad");
+      lastRepPulseTimeout = window.setTimeout(() => {
+        stageCard.classList.remove("flash-good", "flash-bad");
+      }, 380);
+    }
+
+    function spawnSparks(estCorrect) {
+      if (prefersReducedMotion) return;
+      const couleur = estCorrect ? "#00c853" : "#ff5757";
+      const count = estCorrect ? 14 : 10;
+      for (let i = 0; i < count; i += 1) {
+        const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.35;
+        const distance = 60 + Math.random() * 72;
+        const spark = document.createElement("span");
+        spark.className = "spark";
+        spark.style.setProperty("--dx", `${Math.cos(angle) * distance}px`);
+        spark.style.setProperty("--dy", `${Math.sin(angle) * distance}px`);
+        spark.style.setProperty("--spark-color", couleur);
+        sparkField.appendChild(spark);
+        window.setTimeout(() => spark.remove(), 720);
+      }
+    }
+
+    function traiterNouvelleRepetition(stats) {
+      const exercice = analyzer.exerciceActuel;
+      const tracker = trackersParExercice[exercice];
+      if (!tracker) return tracker;
+
+      const nouvellesReps = Math.max(0, stats.repetitions_totales - tracker.total);
+      if (nouvellesReps <= 0) return tracker;
+
+      let correctRestant = Math.max(0, stats.repetitions_correctes - tracker.correct);
+      for (let i = 0; i < nouvellesReps; i += 1) {
+        const estCorrecte = correctRestant > 0;
+        if (estCorrecte) {
+          correctRestant -= 1;
+          tracker.streak += 1;
+          tracker.last = "Validee";
+          vibrerSiPossible(45);
+        } else {
+          tracker.streak = 0;
+          tracker.last = "Invalide";
+          vibrerSiPossible([25, 45, 25]);
+        }
+
+        tracker.best = Math.max(tracker.best, tracker.streak);
+        showRepPulse(estCorrecte, stats.repetitions_totales - (nouvellesReps - i - 1));
+        spawnSparks(estCorrecte);
+      }
+
+      tracker.total = stats.repetitions_totales;
+      tracker.correct = stats.repetitions_correctes;
+      return tracker;
+    }
+
+    function mettreAJourResumeSession(stats, tracker) {
+      const temps = tempsSessionSec();
+      sessionChipEl.textContent = `Session: ${formatDuree(temps)}`;
+      streakChipEl.textContent = `Streak: x${tracker ? tracker.streak : 0}`;
+      const cadence = cadenceRepParMinute(stats.repetitions_totales);
+      intensityChipEl.textContent = `Rythme: ${cadence.toFixed(1)} rep/min`;
+      repPaceEl.textContent = `${cadence.toFixed(1)} rep/min`;
+    }
+
+    function moyenneVisibilite(pointsPose, cote) {
+      const noms = POINTS_VISIBILITE_COTE[cote];
+      const valeurs = noms
+        .map((nom) => pointsPose[nom])
+        .filter((point) => Boolean(point))
+        .map((point) => point.visibilite);
+      if (!valeurs.length) return 0;
+      return valeurs.reduce((somme, valeur) => somme + valeur, 0) / valeurs.length;
+    }
+
+    function orientationMajoritaire() {
+      if (!orientationHistory.length) return "incertaine";
+      const compteur = {};
+      for (const valeur of orientationHistory) {
+        compteur[valeur] = (compteur[valeur] || 0) + 1;
+      }
+      return Object.keys(compteur).reduce((maxKey, key) => {
+        if (compteur[key] > compteur[maxKey]) return key;
+        return maxKey;
+      });
+    }
+
+    function detecterOrientation(pointsPose) {
+      if (!pointsPose || Object.keys(pointsPose).length === 0) {
+        orientationHistory = [];
+        return "inconnue";
+      }
+
+      const visibiliteGauche = moyenneVisibilite(pointsPose, "left");
+      const visibiliteDroite = moyenneVisibilite(pointsPose, "right");
+
+      let orientationInst = "incertaine";
+      if (visibiliteGauche > CONFIG.SEUIL_FACE && visibiliteDroite > CONFIG.SEUIL_FACE) {
+        orientationInst = "face";
+      } else if (visibiliteGauche > CONFIG.SEUIL_PROFIL_HAUT && visibiliteDroite < CONFIG.SEUIL_PROFIL_BAS) {
+        orientationInst = "profil_gauche";
+      } else if (visibiliteDroite > CONFIG.SEUIL_PROFIL_HAUT && visibiliteGauche < CONFIG.SEUIL_PROFIL_BAS) {
+        orientationInst = "profil_droit";
+      }
+
+      if (["face", "profil_gauche", "profil_droit"].includes(orientationInst)) {
+        orientationHistory.push(orientationInst);
+        if (orientationHistory.length > CONFIG.FENETRE_ORIENTATION) {
+          orientationHistory.shift();
+        }
+        return orientationMajoritaire();
+      }
+
+      if (orientationHistory.length) return orientationMajoritaire();
+      return "incertaine";
+    }
+
+    function moyennePoints(pointGauche, pointDroit) {
+      if (!pointGauche || !pointDroit) return null;
+      return {
+        x: (pointGauche.x + pointDroit.x) / 2,
+        y: (pointGauche.y + pointDroit.y) / 2,
+        visibilite: Math.min(pointGauche.visibilite ?? 0, pointDroit.visibilite ?? 0),
+      };
+    }
+
+    function choisirPointParVisibilite(pointGauche, pointDroit) {
+      const pointGaucheValide = pointGauche && pointGauche.visibilite >= CONFIG.SEUIL_VISIBILITE_POINT;
+      const pointDroitValide = pointDroit && pointDroit.visibilite >= CONFIG.SEUIL_VISIBILITE_POINT;
+
+      if (pointGaucheValide && pointDroitValide) {
+        return pointGauche.visibilite >= pointDroit.visibilite
+          ? { x: pointGauche.x, y: pointGauche.y, visibilite: pointGauche.visibilite }
+          : { x: pointDroit.x, y: pointDroit.y, visibilite: pointDroit.visibilite };
+      }
+      if (pointGaucheValide) return { x: pointGauche.x, y: pointGauche.y, visibilite: pointGauche.visibilite };
+      if (pointDroitValide) return { x: pointDroit.x, y: pointDroit.y, visibilite: pointDroit.visibilite };
+
+      if (pointGauche && pointDroit) {
+        return pointGauche.visibilite >= pointDroit.visibilite
+          ? { x: pointGauche.x, y: pointGauche.y, visibilite: pointGauche.visibilite }
+          : { x: pointDroit.x, y: pointDroit.y, visibilite: pointDroit.visibilite };
+      }
+      if (pointGauche) return { x: pointGauche.x, y: pointGauche.y, visibilite: pointGauche.visibilite };
+      if (pointDroit) return { x: pointDroit.x, y: pointDroit.y, visibilite: pointDroit.visibilite };
+      return null;
+    }
+
+    function pointArticulation(pointsPose, nomSimple, orientation) {
+      const pointGauche = pointsPose[`left_${nomSimple}`];
+      const pointDroit = pointsPose[`right_${nomSimple}`];
+
+      if (orientation === "profil_gauche") {
+        if (pointGauche && pointGauche.visibilite >= CONFIG.SEUIL_VISIBILITE_POINT) {
+          return { x: pointGauche.x, y: pointGauche.y, visibilite: pointGauche.visibilite };
+        }
+        return choisirPointParVisibilite(pointGauche, pointDroit);
+      }
+
+      if (orientation === "profil_droit") {
+        if (pointDroit && pointDroit.visibilite >= CONFIG.SEUIL_VISIBILITE_POINT) {
+          return { x: pointDroit.x, y: pointDroit.y, visibilite: pointDroit.visibilite };
+        }
+        return choisirPointParVisibilite(pointGauche, pointDroit);
+      }
+
+      if (orientation === "face") {
+        if (pointGauche && pointDroit) {
+          return moyennePoints(pointGauche, pointDroit);
+        }
+        return choisirPointParVisibilite(pointGauche, pointDroit);
+      }
+
+      return choisirPointParVisibilite(pointGauche, pointDroit);
+    }
+
+    function recupererPointsUtiles(pointsPose, orientation) {
+      if (!pointsPose || Object.keys(pointsPose).length === 0) return {};
+      return {
+        epaule: pointArticulation(pointsPose, "shoulder", orientation),
+        coude: pointArticulation(pointsPose, "elbow", orientation),
+        poignet: pointArticulation(pointsPose, "wrist", orientation),
+        hanche: pointArticulation(pointsPose, "hip", orientation),
+        genou: pointArticulation(pointsPose, "knee", orientation),
+        cheville: pointArticulation(pointsPose, "ankle", orientation),
+      };
+    }
+
+    function extraireLandmarks(landmarks) {
+      if (!landmarks || !landmarks.length) return {};
+      const points = {};
+      for (const [nom, indice] of Object.entries(LANDMARK_INDEX)) {
+        const lm = landmarks[indice];
+        if (!lm) continue;
+        points[nom] = {
+          x: Number(lm.x),
+          y: Number(lm.y),
+          z: Number(lm.z || 0),
+          visibilite: Number(lm.visibility || 0),
+        };
+      }
+      return points;
+    }
+
+    function orientationLabel(orientation) {
+      if (orientation === "profil_gauche") return "profil gauche";
+      if (orientation === "profil_droit") return "profil droit";
+      if (orientation === "face") return "face";
+      if (orientation === "inconnue") return "inconnue";
+      return "incertaine";
+    }
+
+    function classFeedback(niveau) {
+      if (niveau === "ok") return "ok";
+      if (niveau === "erreur") return "error";
+      return "neutral";
+    }
+
+    function couleurDepuisNiveau(niveau, estCorrect) {
+      if (CONFIG.MODE_COULEUR_BINAIRE) {
+        return estCorrect ? CONFIG.COLORS.ok : CONFIG.COLORS.error;
+      }
+      if (niveau === "ok") return CONFIG.COLORS.ok;
+      if (niveau === "neutre") return CONFIG.COLORS.neutral;
+      return CONFIG.COLORS.error;
+    }
+
+    function mettreAJourUI(orientation, retourAnalyse, cadrage) {
+      const stats = analyzer.obtenirStatsExerciceActuel();
+      const tracker = traiterNouvelleRepetition(stats) || trackersParExercice[analyzer.exerciceActuel];
+      const orientationEtat = couleurEtEtatOrientation(orientation);
+      const supportMessage = messageSecondaire(orientationEtat, cadrage, retourAnalyse);
+
+      orientationBadge.textContent = `Orientation: ${orientationLabel(orientation)}`;
+      orientationBadge.dataset.state = orientationEtat.state;
+      framingBadge.textContent = `Cadrage: ${cadrage.label}`;
+      framingBadge.dataset.state = cadrage.state;
+      feedbackText.textContent = retourAnalyse.message;
+      feedbackSupportEl.textContent = supportMessage;
+      feedbackCard.classList.remove("ok", "error", "neutral");
+      feedbackCard.classList.add(classFeedback(retourAnalyse.niveau_feedback));
+      coachDotEl.classList.remove("ok", "error", "neutral");
+      coachDotEl.classList.add(classFeedback(retourAnalyse.niveau_feedback));
+      phaseBadge.textContent = `Phase: ${stats.etat_mouvement}`;
+      phaseBadge.dataset.state = stats.etat_mouvement === "bas" ? "warn" : "good";
+
+      stageInsightTitleEl.textContent = `${stats.nom_exercice} en direct`;
+      stageInsightCopyEl.textContent = stats.repetitions_totales > 0
+        ? `${stats.repetitions_correctes} rep propre${stats.repetitions_correctes > 1 ? "s" : ""} sur ${stats.repetitions_totales}. ${supportMessage}`
+        : supportMessage;
+
+      exerciseNameEl.textContent = stats.nom_exercice;
+      movementStateEl.textContent = stats.etat_mouvement;
+      repsCorrectEl.textContent = String(stats.repetitions_correctes);
+      repsTotalEl.textContent = String(stats.repetitions_totales);
+      repsInvalidEl.textContent = String(stats.repetitions_invalides);
+      streakNowEl.textContent = `x${tracker.streak}`;
+      streakBestEl.textContent = `x${tracker.best}`;
+      lastRepEl.textContent = tracker.last;
+      mainAngleEl.textContent = retourAnalyse.angle_principal == null
+        ? "-"
+        : `${retourAnalyse.angle_principal.toFixed(1)}°`;
+
+      const taux = stats.taux_reussite || 0;
+      qualityLabelEl.textContent = `Taux de reussite: ${taux.toFixed(1)}%`;
+      qualityFillEl.style.width = `${clamp(taux, 0, 100)}%`;
+
+      const progression = progressionAngle(analyzer.exerciceActuel, retourAnalyse.angle_principal);
+      const ringColor = retourAnalyse.niveau_feedback === "neutre"
+        ? CONFIG.COLORS.neutral
+        : currentFeedbackColor;
+      setRingVisual(progression, ringColor);
+      angleDepthLabelEl.textContent = texteProgression(analyzer.exerciceActuel);
+      angleDepthHintEl.textContent = supportMessage;
+
+      mettreAJourResumeSession(stats, tracker);
+    }
+
+    function syncCanvasSize() {
+      const width = videoEl.videoWidth || 1280;
+      const height = videoEl.videoHeight || 720;
+      setStageRatio(width, height);
+      if (canvasEl.width !== width || canvasEl.height !== height) {
+        canvasEl.width = width;
+        canvasEl.height = height;
+      }
+    }
+
+    function updateFps(nowMs) {
+      if (!lastFpsTime) {
+        lastFpsTime = nowMs;
+        return;
+      }
+      const deltaMs = nowMs - lastFpsTime;
+      lastFpsTime = nowMs;
+      if (deltaMs <= 0) return;
+      const fps = 1000 / deltaMs;
+      fpsWindow.push(fps);
+      if (fpsWindow.length > 45) fpsWindow.shift();
+      const fpsMoyen = fpsWindow.reduce((acc, val) => acc + val, 0) / fpsWindow.length;
+      fpsBadge.textContent = `FPS: ${fpsMoyen.toFixed(1)}`;
+    }
+
+    function drawFallbackFrame() {
+      canvasCtx.save();
+      canvasCtx.fillStyle = "#061926";
+      canvasCtx.fillRect(0, 0, canvasEl.width || 1280, canvasEl.height || 720);
+      canvasCtx.fillStyle = "#b5c7ce";
+      canvasCtx.font = "700 20px Manrope";
+      canvasCtx.fillText("Aucune pose detectee", 24, 40);
+      canvasCtx.restore();
+    }
+
+    function getDrawingOptions() {
+      const baseWidth = canvasEl.width || 1280;
+      return {
+        lineWidth: clamp(baseWidth / 360, 2.2, 4.2),
+        radius: clamp(baseWidth / 420, 2.2, 4.2),
+      };
+    }
+
+    function onPoseResults(results) {
+      syncCanvasSize();
+      canvasCtx.save();
+      canvasCtx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+
+      if (results.image) {
+        canvasCtx.drawImage(results.image, 0, 0, canvasEl.width, canvasEl.height);
+      } else {
+        drawFallbackFrame();
+      }
+
+      const pointsPose = extraireLandmarks(results.poseLandmarks);
+      const orientation = detecterOrientation(pointsPose);
+      const cadrage = evaluerCadrage(pointsPose);
+      const pointsCorps = recupererPointsUtiles(pointsPose, orientation);
+      const retourAnalyse = analyzer.analyser(pointsCorps, orientation);
+      currentFeedbackColor = couleurDepuisNiveau(retourAnalyse.niveau_feedback, retourAnalyse.est_correct);
+
+      if (results.poseLandmarks) {
+        const drawingOptions = getDrawingOptions();
+        drawConnectors(canvasCtx, results.poseLandmarks, COACH_CONNECTIONS, {
+          color: currentFeedbackColor,
+          lineWidth: drawingOptions.lineWidth,
+        });
+        drawLandmarks(
+          canvasCtx,
+          COACH_LANDMARK_INDICES.map((index) => results.poseLandmarks[index]).filter(Boolean),
+          {
+          color: currentFeedbackColor,
+          lineWidth: 1,
+          radius: drawingOptions.radius,
+        }
+        );
+      }
+
+      canvasCtx.restore();
+      mettreAJourUI(orientation, retourAnalyse, cadrage);
+    }
+
+    async function traiterFramePose(nowMs) {
+      if (!running || videoEl.readyState < 2 || !pose || processingFrame) return;
+      const minInterval = 1000 / CONFIG.TARGET_POSE_FPS;
+      if (nowMs - lastPoseProcessMs < minInterval) return;
+
+      processingFrame = true;
+      try {
+        updateFps(nowMs);
+        lastPoseProcessMs = nowMs;
+        await pose.send({ image: videoEl });
+      } catch (error) {
+        console.error("Erreur MediaPipe:", error);
+        setFeedback("error", "Erreur de detection MediaPipe. Relance la webcam.");
+      } finally {
+        processingFrame = false;
+      }
+    }
+
+    function annulerBoucleVideo() {
+      if (loopRequest) {
+        cancelAnimationFrame(loopRequest);
+        loopRequest = null;
+      }
+      if (videoFrameCallbackId !== null && typeof videoEl.cancelVideoFrameCallback === "function") {
+        videoEl.cancelVideoFrameCallback(videoFrameCallbackId);
+      }
+      videoFrameCallbackId = null;
+    }
+
+    function planifierBoucleVideo() {
+      if (!running) return;
+
+      const onTick = async (nowMs) => {
+        if (!running) return;
+        await traiterFramePose(nowMs);
+        planifierBoucleVideo();
+      };
+
+      if ("requestVideoFrameCallback" in HTMLVideoElement.prototype && typeof videoEl.requestVideoFrameCallback === "function") {
+        videoFrameCallbackId = videoEl.requestVideoFrameCallback((_now, metadata) => {
+          void onTick(metadata?.expectedDisplayTime || performance.now());
+        });
+        return;
+      }
+
+      loopRequest = requestAnimationFrame((nowMs) => {
+        void onTick(nowMs);
+      });
+    }
+
+    function setFeedback(type, message) {
+      feedbackCard.classList.remove("ok", "error", "neutral");
+      feedbackCard.classList.add(type);
+      feedbackText.textContent = message;
+    }
+
+    async function initPose() {
+      if (pose) return;
+      const mobileViewport = window.matchMedia("(pointer: coarse)").matches;
+      pose = new Pose({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
+      });
+      pose.setOptions({
+        modelComplexity: mobileViewport ? 0 : 1,
+        smoothLandmarks: true,
+        enableSegmentation: false,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.55,
+      });
+      pose.onResults(onPoseResults);
+    }
+
+    async function demarrerWebcam() {
+      try {
+        await initPose();
+        setFeedback("neutral", "Demarrage de la webcam...");
+        feedbackSupportEl.textContent = "Preparation de la camera et du moteur de pose...";
+        startBtn.disabled = true;
+
+        if (mediaStream) {
+          mediaStream.getTracks().forEach((track) => track.stop());
+          mediaStream = null;
+        }
+
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: getCameraConstraints(),
+        });
+
+        videoEl.srcObject = mediaStream;
+        await videoEl.play();
+        syncCanvasSize();
+
+        running = true;
+        sessionStartMs = performance.now();
+        stopBtn.disabled = false;
+        startBtn.disabled = true;
+        cameraSelect.disabled = true;
+        lastFpsTime = 0;
+        lastPoseProcessMs = 0;
+        fpsWindow = [];
+        sessionChipEl.textContent = "Session: 00:00";
+        intensityChipEl.textContent = "Rythme: 0 rep/min";
+        framingBadge.textContent = "Cadrage: calibration";
+        framingBadge.dataset.state = "warn";
+        coachDotEl.classList.remove("ok", "error");
+        coachDotEl.classList.add("neutral");
+        stageInsightTitleEl.textContent = `${CONFIG.EXERCICES[analyzer.exerciceActuel].nom} en direct`;
+        stageInsightCopyEl.textContent = "Place-toi entierement dans le cadre, puis commence lentement.";
+        setFeedback("neutral", "Camera active. Lance une repetition complete.");
+        feedbackSupportEl.textContent = "Place-toi entierement dans le cadre, puis commence lentement.";
+        planifierBoucleVideo();
+      } catch (error) {
+        console.error(error);
+        running = false;
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+        cameraSelect.disabled = false;
+        setFeedback("error", "Impossible d'acceder a la webcam. Autorise la camera puis reessaie.");
+        feedbackSupportEl.textContent = "Sur mobile, ouvre le site en HTTPS et autorise explicitement la camera.";
+      }
+    }
+
+    function arreterWebcam() {
+      running = false;
+      processingFrame = false;
+      sessionStartMs = 0;
+      annulerBoucleVideo();
+      if (mediaStream) {
+        mediaStream.getTracks().forEach((track) => track.stop());
+        mediaStream = null;
+      }
+      videoEl.srcObject = null;
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      cameraSelect.disabled = false;
+      fpsBadge.textContent = "FPS: 0.0";
+      orientationBadge.textContent = "Orientation: -";
+      orientationBadge.dataset.state = "error";
+      framingBadge.textContent = "Cadrage: -";
+      framingBadge.dataset.state = "warn";
+      phaseBadge.textContent = "Phase: haut";
+      phaseBadge.dataset.state = "warn";
+      coachDotEl.classList.remove("ok", "error");
+      coachDotEl.classList.add("neutral");
+      sessionChipEl.textContent = "Session: 00:00";
+      intensityChipEl.textContent = "Rythme: 0 rep/min";
+      stageInsightTitleEl.textContent = `${CONFIG.EXERCICES[analyzer.exerciceActuel].nom} en direct`;
+      stageInsightCopyEl.textContent = "Webcam arretee. Relance l'analyse pour reprendre le coaching.";
+      setRingVisual(0, CONFIG.COLORS.neutral);
+      setFeedback("neutral", "Webcam arretee.");
+      feedbackSupportEl.textContent = "Relance la webcam pour reprendre l'analyse.";
+    }
+
+    function bindExerciseButtons() {
+      for (const button of exerciseButtons) {
+        button.addEventListener("click", () => {
+          const exercice = button.dataset.exercise;
+          analyzer.changerExercice(exercice);
+          for (const b of exerciseButtons) {
+            b.classList.toggle("active", b === button);
+          }
+
+          const stats = analyzer.obtenirStatsExerciceActuel();
+          const tracker = trackersParExercice[exercice];
+          if (tracker) {
+            tracker.total = stats.repetitions_totales;
+            tracker.correct = stats.repetitions_correctes;
+          }
+
+          exerciseNameEl.textContent = stats.nom_exercice;
+          movementStateEl.textContent = stats.etat_mouvement;
+          repsCorrectEl.textContent = String(stats.repetitions_correctes);
+          repsTotalEl.textContent = String(stats.repetitions_totales);
+          repsInvalidEl.textContent = String(stats.repetitions_invalides);
+          streakNowEl.textContent = `x${tracker ? tracker.streak : 0}`;
+          streakBestEl.textContent = `x${tracker ? tracker.best : 0}`;
+          lastRepEl.textContent = tracker ? tracker.last : "-";
+          qualityLabelEl.textContent = `Taux de reussite: ${(stats.taux_reussite || 0).toFixed(1)}%`;
+          qualityFillEl.style.width = `${clamp(stats.taux_reussite || 0, 0, 100)}%`;
+          repPaceEl.textContent = `${cadenceRepParMinute(stats.repetitions_totales).toFixed(1)} rep/min`;
+          mainAngleEl.textContent = "-";
+          setRingVisual(0, CONFIG.COLORS.neutral);
+          angleDepthLabelEl.textContent = texteProgression(exercice);
+          angleDepthHintEl.textContent = "Lance une repetition complete.";
+          coachDotEl.classList.remove("ok", "error");
+          coachDotEl.classList.add("neutral");
+          phaseBadge.textContent = `Phase: ${stats.etat_mouvement}`;
+          phaseBadge.dataset.state = stats.etat_mouvement === "bas" ? "warn" : "good";
+          framingBadge.textContent = "Cadrage: calibration";
+          framingBadge.dataset.state = "warn";
+          streakChipEl.textContent = `Streak: x${tracker ? tracker.streak : 0}`;
+          stageInsightTitleEl.textContent = `${stats.nom_exercice} en direct`;
+          stageInsightCopyEl.textContent = "Reprends une position stable et laisse tout le corps dans le cadre.";
+          setFeedback("neutral", `Exercice actif: ${stats.nom_exercice}`);
+          feedbackSupportEl.textContent = "Reprends une position stable et laisse tout le corps dans le cadre.";
+        });
+      }
+    }
+
+    async function toggleFullscreen() {
+      try {
+        if (!document.fullscreenElement) {
+          await document.documentElement.requestFullscreen();
+        } else {
+          await document.exitFullscreen();
+        }
+      } catch (error) {
+        console.error("Impossible de basculer en plein ecran:", error);
+      }
+    }
+
+    startBtn.addEventListener("click", demarrerWebcam);
+    stopBtn.addEventListener("click", arreterWebcam);
+    if (document.documentElement.requestFullscreen) {
+      fullscreenBtn.addEventListener("click", toggleFullscreen);
+    } else {
+      fullscreenBtn.disabled = true;
+      fullscreenBtn.title = "Plein ecran non pris en charge sur ce navigateur.";
+    }
+    document.addEventListener("fullscreenchange", () => {
+      fullscreenBtn.textContent = document.fullscreenElement ? "Quitter plein ecran" : "Plein ecran";
+    });
+    cameraSelect.addEventListener("change", async () => {
+      if (running) {
+        arreterWebcam();
+        await demarrerWebcam();
+      }
+    });
+    window.addEventListener("beforeunload", arreterWebcam);
+    bindExerciseButtons();
+  </script>
+</body>
+</html>
