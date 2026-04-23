@@ -813,7 +813,7 @@
       }
 
       .stage-viewport {
-        min-height: min(76svh, 760px);
+        min-height: 0;
       }
 
       .controls {
@@ -1063,6 +1063,7 @@
     const CONFIG = {
       MODE_COULEUR_BINAIRE: true,
       TARGET_POSE_FPS: 24,
+      TARGET_POSE_FPS_MOBILE: 18,
       SEUIL_FACE: 0.6,
       SEUIL_PROFIL_HAUT: 0.7,
       SEUIL_PROFIL_BAS: 0.3,
@@ -1826,6 +1827,7 @@
     let lastPoseProcessMs = 0;
     let orientationHistory = [];
     let currentFeedbackColor = CONFIG.COLORS.neutral;
+    let derniersLandmarks = null;
     let fpsWindow = [];
     let sessionStartMs = 0;
     let lastRepPulseTimeout = null;
@@ -1879,6 +1881,11 @@
       return (repsTotal / duree) * 60;
     }
 
+    function ciblePoseFps() {
+      const tactile = window.matchMedia("(pointer: coarse)").matches;
+      return tactile ? CONFIG.TARGET_POSE_FPS_MOBILE : CONFIG.TARGET_POSE_FPS;
+    }
+
     function getCameraConstraints() {
       const facingMode = cameraSelect.value;
       const tactile = window.matchMedia("(pointer: coarse)").matches;
@@ -1887,20 +1894,20 @@
       if (tactile && portrait) {
         return {
           facingMode: { ideal: facingMode },
-          width: { ideal: 720 },
-          height: { ideal: 1280 },
+          width: { ideal: 540 },
+          height: { ideal: 960 },
           aspectRatio: { ideal: 9 / 16 },
-          frameRate: { ideal: 30, max: 30 },
+          frameRate: { ideal: 24, max: 24 },
         };
       }
 
       if (tactile) {
         return {
           facingMode: { ideal: facingMode },
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
+          width: { ideal: 960 },
+          height: { ideal: 540 },
           aspectRatio: { ideal: 16 / 9 },
-          frameRate: { ideal: 30, max: 30 },
+          frameRate: { ideal: 24, max: 24 },
         };
       }
 
@@ -2388,48 +2395,56 @@
       };
     }
 
-    function onPoseResults(results) {
+    function dessinerSceneVideo() {
       syncCanvasSize();
       canvasCtx.save();
       canvasCtx.clearRect(0, 0, canvasEl.width, canvasEl.height);
 
-      if (results.image) {
-        canvasCtx.drawImage(results.image, 0, 0, canvasEl.width, canvasEl.height);
+      if (videoEl.readyState >= 2) {
+        canvasCtx.drawImage(videoEl, 0, 0, canvasEl.width, canvasEl.height);
       } else {
         drawFallbackFrame();
+        canvasCtx.restore();
+        return;
       }
 
-      const pointsPose = extraireLandmarks(results.poseLandmarks);
-      const orientation = detecterOrientation(pointsPose);
-      const cadrage = evaluerCadrage(pointsPose);
-      const pointsCorps = recupererPointsUtiles(pointsPose, orientation);
-      const retourAnalyse = analyzer.analyser(pointsCorps, orientation);
-      currentFeedbackColor = couleurDepuisNiveau(retourAnalyse.niveau_feedback, retourAnalyse.est_correct);
-
-      if (results.poseLandmarks) {
+      if (derniersLandmarks && derniersLandmarks.length) {
         const drawingOptions = getDrawingOptions();
-        drawConnectors(canvasCtx, results.poseLandmarks, COACH_CONNECTIONS, {
+        drawConnectors(canvasCtx, derniersLandmarks, COACH_CONNECTIONS, {
           color: currentFeedbackColor,
           lineWidth: drawingOptions.lineWidth,
         });
         drawLandmarks(
           canvasCtx,
-          COACH_LANDMARK_INDICES.map((index) => results.poseLandmarks[index]).filter(Boolean),
+          COACH_LANDMARK_INDICES.map((index) => derniersLandmarks[index]).filter(Boolean),
           {
-          color: currentFeedbackColor,
-          lineWidth: 1,
-          radius: drawingOptions.radius,
-        }
+            color: currentFeedbackColor,
+            lineWidth: 1,
+            radius: drawingOptions.radius,
+          }
         );
       }
 
       canvasCtx.restore();
+    }
+
+    function onPoseResults(results) {
+      derniersLandmarks = Array.isArray(results.poseLandmarks) && results.poseLandmarks.length
+        ? results.poseLandmarks
+        : null;
+
+      const pointsPose = extraireLandmarks(derniersLandmarks);
+      const orientation = detecterOrientation(pointsPose);
+      const cadrage = evaluerCadrage(pointsPose);
+      const pointsCorps = recupererPointsUtiles(pointsPose, orientation);
+      const retourAnalyse = analyzer.analyser(pointsCorps, orientation);
+      currentFeedbackColor = couleurDepuisNiveau(retourAnalyse.niveau_feedback, retourAnalyse.est_correct);
       mettreAJourUI(orientation, retourAnalyse, cadrage);
     }
 
     async function traiterFramePose(nowMs) {
       if (!running || videoEl.readyState < 2 || !pose || processingFrame) return;
-      const minInterval = 1000 / CONFIG.TARGET_POSE_FPS;
+      const minInterval = 1000 / ciblePoseFps();
       if (nowMs - lastPoseProcessMs < minInterval) return;
 
       processingFrame = true;
@@ -2459,9 +2474,10 @@
     function planifierBoucleVideo() {
       if (!running) return;
 
-      const onTick = async (nowMs) => {
+      const onTick = (nowMs) => {
         if (!running) return;
-        await traiterFramePose(nowMs);
+        dessinerSceneVideo();
+        void traiterFramePose(nowMs);
         planifierBoucleVideo();
       };
 
@@ -2491,7 +2507,7 @@
       });
       pose.setOptions({
         modelComplexity: mobileViewport ? 0 : 1,
-        smoothLandmarks: true,
+        smoothLandmarks: !mobileViewport,
         enableSegmentation: false,
         minDetectionConfidence: 0.5,
         minTrackingConfidence: 0.55,
@@ -2501,7 +2517,7 @@
 
     async function demarrerWebcam() {
       try {
-        await initPose();
+        const initPosePromise = initPose();
         setFeedback("neutral", "Demarrage de la webcam...");
         feedbackSupportEl.textContent = "Preparation de la camera et du moteur de pose...";
         startBtn.disabled = true;
@@ -2519,6 +2535,10 @@
         videoEl.srcObject = mediaStream;
         await videoEl.play();
         syncCanvasSize();
+        derniersLandmarks = null;
+        dessinerSceneVideo();
+
+        await initPosePromise;
 
         running = true;
         sessionStartMs = performance.now();
@@ -2542,6 +2562,11 @@
       } catch (error) {
         console.error(error);
         running = false;
+        if (mediaStream) {
+          mediaStream.getTracks().forEach((track) => track.stop());
+          mediaStream = null;
+        }
+        videoEl.srcObject = null;
         startBtn.disabled = false;
         stopBtn.disabled = true;
         cameraSelect.disabled = false;
@@ -2560,6 +2585,7 @@
         mediaStream = null;
       }
       videoEl.srcObject = null;
+      derniersLandmarks = null;
       startBtn.disabled = false;
       stopBtn.disabled = true;
       cameraSelect.disabled = false;
@@ -2579,6 +2605,7 @@
       setRingVisual(0, CONFIG.COLORS.neutral);
       setFeedback("neutral", "Webcam arretee.");
       feedbackSupportEl.textContent = "Relance la webcam pour reprendre l'analyse.";
+      drawFallbackFrame();
     }
 
     function bindExerciseButtons() {
@@ -2654,6 +2681,18 @@
       if (running) {
         arreterWebcam();
         await demarrerWebcam();
+      }
+    });
+    videoEl.addEventListener("loadedmetadata", () => {
+      syncCanvasSize();
+      dessinerSceneVideo();
+    });
+    window.addEventListener("resize", () => {
+      if (videoEl.readyState >= 1) {
+        syncCanvasSize();
+        if (running) {
+          dessinerSceneVideo();
+        }
       }
     });
     window.addEventListener("beforeunload", arreterWebcam);
