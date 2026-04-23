@@ -34,7 +34,7 @@ Le projet detecte automatiquement l'orientation (face, profil gauche, profil dro
 
 - Python 3.10+
 - opencv-python 4.8+
-- mediapipe 0.10.14
+- mediapipe 0.10.32
 - numpy 1.24+
 
 ## Structure du projet
