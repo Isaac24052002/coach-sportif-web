@@ -15,11 +15,17 @@ class SessionLogger:
 
     CHAMPS_CSV = [
         "exercice",
-        "repetitions_totales",
-        "repetitions_correctes",
-        "repetitions_invalides",
-        "pourcentage_correct",
+        "reps_cibles",
+        "reps_realisees",
+        "reps_validees",
         "duree_exercice_sec",
+        "calories",
+        "score_qualite",
+        "angle_moyen",
+        "angle_min",
+        "angle_max",
+        "fatigue_detectee",
+        "rep_fatigue",
         "duree_totale_sec",
         "fps_moyen",
     ]
@@ -38,12 +44,18 @@ class SessionLogger:
         lignes_normalisees: list[dict[str, str | int | float]] = []
         for ligne in lignes_resume:
             ligne_normalisee = {
-                "exercice": str(ligne.get("exercice", "-")),
-                "repetitions_totales": int(ligne.get("repetitions_totales", 0)),
-                "repetitions_correctes": int(ligne.get("repetitions_correctes", 0)),
-                "repetitions_invalides": int(ligne.get("repetitions_invalides", 0)),
-                "pourcentage_correct": float(ligne.get("pourcentage_correct", 0.0)),
-                "duree_exercice_sec": float(ligne.get("duree_exercice_sec", 0.0)),
+                "exercice": str(ligne.get("nom_exercice", ligne.get("exercice", "-"))),
+                "reps_cibles": int(ligne.get("reps_cibles", 0)),
+                "reps_realisees": int(ligne.get("reps_realisees", 0)),
+                "reps_validees": int(ligne.get("reps_validees", 0)),
+                "duree_exercice_sec": float(ligne.get("duree_sec", ligne.get("duree_exercice_sec", 0.0))),
+                "calories": float(ligne.get("calories", 0.0)),
+                "score_qualite": float(ligne.get("score_qualite", 0.0)),
+                "angle_moyen": float(ligne.get("angle_moyen", 0.0)),
+                "angle_min": float(ligne.get("angle_min", 0.0)),
+                "angle_max": float(ligne.get("angle_max", 0.0)),
+                "fatigue_detectee": int(ligne.get("fatigue_detectee", 0)),
+                "rep_fatigue": int(ligne.get("rep_fatigue", 0) or 0),
                 "duree_totale_sec": float(ligne.get("duree_totale_sec", 0.0)),
                 "fps_moyen": float(ligne.get("fps_moyen", 0.0)),
             }
@@ -54,19 +66,25 @@ class SessionLogger:
     def _calculer_resume_global(
         lignes_resume: list[dict[str, str | int | float]],
     ) -> dict[str, float | int]:
-        repetitions_totales = sum(int(ligne.get("repetitions_totales", 0)) for ligne in lignes_resume)
-        repetitions_correctes = sum(int(ligne.get("repetitions_correctes", 0)) for ligne in lignes_resume)
-        repetitions_invalides = sum(int(ligne.get("repetitions_invalides", 0)) for ligne in lignes_resume)
+        repetitions_totales = sum(int(ligne.get("reps_realisees", 0)) for ligne in lignes_resume)
+        repetitions_valides = sum(int(ligne.get("reps_validees", 0)) for ligne in lignes_resume)
+        calories_totales = sum(float(ligne.get("calories", 0.0)) for ligne in lignes_resume)
         duree_totale_sec = max((float(ligne.get("duree_totale_sec", 0.0)) for ligne in lignes_resume), default=0.0)
         fps_moyen = max((float(ligne.get("fps_moyen", 0.0)) for ligne in lignes_resume), default=0.0)
-        taux_global = (repetitions_correctes / repetitions_totales * 100.0) if repetitions_totales > 0 else 0.0
+        taux_global = (repetitions_valides / repetitions_totales * 100.0) if repetitions_totales > 0 else 0.0
+        score_moyen = (
+            sum(float(ligne.get("score_qualite", 0.0)) for ligne in lignes_resume) / len(lignes_resume)
+            if lignes_resume
+            else 0.0
+        )
         return {
             "repetitions_totales": repetitions_totales,
-            "repetitions_correctes": repetitions_correctes,
-            "repetitions_invalides": repetitions_invalides,
+            "repetitions_valides": repetitions_valides,
             "taux_reussite_global": round(taux_global, 2),
             "duree_totale_sec": round(duree_totale_sec, 2),
             "fps_moyen": round(fps_moyen, 2),
+            "calories_totales": round(calories_totales, 2),
+            "score_moyen": round(score_moyen, 2),
         }
 
     def enregistrer_rapport_csv(self, lignes_resume: list[dict[str, str | int | float]]) -> Path:

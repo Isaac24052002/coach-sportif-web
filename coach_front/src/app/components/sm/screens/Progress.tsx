@@ -1,0 +1,329 @@
+import { GlassCard, MetricCard, Pill, QualityRing } from "../primitives";
+import {
+  Activity,
+  CalendarDays,
+  CheckCircle2,
+  Clock,
+  Flame,
+  Target,
+  TrendingUp,
+  Trophy,
+} from "lucide-react";
+import { useAuth } from "../../../AuthContext";
+
+const clampScore = (value: number) => Math.max(0, Math.min(100, Number.isFinite(value) ? value : 0));
+
+const formatShortDate = (value: string) =>
+  new Date(`${value}T12:00:00`).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+
+const formatSessionDate = (value: string) =>
+  new Date(value.replace(" ", "T")).toLocaleDateString("fr-FR", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+const formatDuration = (seconds: number) => {
+  const totalMin = Math.round(seconds / 60);
+  const hours = Math.floor(totalMin / 60);
+  const minutes = totalMin % 60;
+  return hours > 0 ? `${hours}h${String(minutes).padStart(2, "0")}` : `${minutes} min`;
+};
+
+export function ProgressScreen() {
+  const { view } = useAuth();
+  const totals = view?.insights?.totals;
+  const prog = (view?.insights?.progression ?? []).map((item) => ({ ...item, score: clampScore(item.score) }));
+  const quality = (view?.insights?.quality ?? []).map((item) => ({ ...item, score: clampScore(item.score) }));
+  const recent = (view?.insights?.recent_sessions ?? []).map((item) => ({ ...item, score: clampScore(item.score) }));
+
+  const sessionsTotal = totals?.sessions ?? 0;
+  const sessions14d = totals?.sessions_14d ?? 0;
+  const calories14d = Math.round(totals?.calories_14d ?? 0);
+  const duration14d = totals?.duration_14d_sec ?? 0;
+  const avgScore = Math.round(clampScore(totals?.avg_score ?? 0));
+  const activeDays = totals?.active_days_14d ?? 0;
+  const currentStreak = totals?.current_streak ?? 0;
+  const bestScore = Math.round(clampScore(totals?.best_score_14d ?? 0));
+  const consistency = clampScore(totals?.consistency_pct ?? 0);
+  const todayCompleted = totals?.today_completed ?? false;
+
+  const calData = prog.map((p) => p.calories);
+  const maxCal = Math.max(...calData, 1);
+  const trendCal = prog.slice(-7).map((p) => p.calories);
+  const trendDur = prog.slice(-7).map((p) => p.duration_sec / 60);
+  const trendScore = prog.slice(-7).map((p) => p.score);
+  const sorted = [...quality].sort((a, b) => b.score - a.score);
+  const strengths = sorted.filter((item) => item.score >= 70).slice(0, 4);
+  const weaknesses = [...quality].filter((item) => item.score < 70).sort((a, b) => a.score - b.score).slice(0, 4);
+
+  return (
+    <div className="space-y-6 p-6 lg:p-10">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <h1 className="text-white" style={{ fontFamily: "Space Grotesk", fontSize: 32, fontWeight: 700 }}>
+            Progression
+          </h1>
+          <p className="text-white/50" style={{ fontSize: 14 }}>
+            14 derniers jours, calculés jour par jour sans doubler une même date.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Pill tone={todayCompleted ? "good" : "neutral"}>
+            {todayCompleted ? "Aujourd'hui validé" : "Aujourd'hui pas encore lancé"}
+          </Pill>
+          <Pill tone="good">{activeDays}/14 jours actifs</Pill>
+          <Pill tone={currentStreak >= 3 ? "good" : "warn"}>{currentStreak} jour(s) d'affilée</Pill>
+        </div>
+      </div>
+
+      <GlassCard className="overflow-hidden p-6">
+        <div className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
+          <div>
+            <div className="flex items-center gap-2 text-[#FFD166]" style={{ fontSize: 12, fontWeight: 600 }}>
+              <TrendingUp size={14} />
+              Lecture rapide
+            </div>
+            <h3 className="mt-2 text-white" style={{ fontSize: 22, fontWeight: 700 }}>
+              Régularité en hausse
+            </h3>
+            <p className="mt-2 max-w-xl text-white/50" style={{ fontSize: 13, lineHeight: 1.5 }}>
+              Tu as enregistré {sessions14d} séance(s) sur les 14 derniers jours, avec un meilleur score de {bestScore}/100
+              et une constance estimée à {Math.round(consistency)}%.
+            </p>
+            <div className="mt-5 h-3 rounded-full bg-white/6">
+              <div
+                className="h-full rounded-full"
+                style={{
+                  width: `${consistency}%`,
+                  background: "linear-gradient(90deg,#00D4AA,#FFD166)",
+                  boxShadow: "0 0 20px rgba(0,212,170,0.25)",
+                }}
+              />
+            </div>
+            <div className="mt-2 flex items-center justify-between text-white/35" style={{ fontSize: 11 }}>
+              <span>0%</span>
+              <span>Couverture des 14 jours</span>
+              <span>100%</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <MiniStat icon={<CalendarDays size={15} />} label="Jours actifs" value={`${activeDays}/14`} tone="#00D4AA" />
+            <MiniStat icon={<Trophy size={15} />} label="Meilleur score" value={`${bestScore}/100`} tone="#FFD166" />
+            <MiniStat icon={<Target size={15} />} label="Série actuelle" value={`${currentStreak} j`} tone="#FF6B4A" />
+            <MiniStat icon={<CheckCircle2 size={15} />} label="Aujourd'hui" value={todayCompleted ? "Fait" : "À lancer"} tone={todayCompleted ? "#00D4AA" : "#FFD166"} />
+          </div>
+        </div>
+      </GlassCard>
+
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <MetricCard icon={<Activity size={20} />} label="Sessions totales" value={sessionsTotal} trend={trendDur} />
+        <MetricCard icon={<Flame size={20} />} label="Calories 14j" value={calories14d.toLocaleString("fr")} unit="kcal" color="#FF6B4A" trend={trendCal} />
+        <MetricCard icon={<Clock size={20} />} label="Temps 14j" value={formatDuration(duration14d)} color="#FFD166" trend={trendDur} />
+        <MetricCard icon={<Trophy size={20} />} label="Score moyen" value={avgScore} unit="/100" trend={trendScore} />
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+        <GlassCard className="p-6">
+          <div className="mb-5 flex items-center justify-between">
+            <div>
+              <h3 className="text-white" style={{ fontSize: 16, fontWeight: 600 }}>
+                Charge quotidienne
+              </h3>
+              <div className="text-white/45" style={{ fontSize: 11 }}>
+                Historique jour par jour sur 14 jours
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-white/45" style={{ fontSize: 11 }}>
+                Cumul 14 jours
+              </div>
+              <div className="text-white" style={{ fontFamily: "Space Grotesk", fontSize: 22, fontWeight: 700 }}>
+                {calories14d} kcal
+              </div>
+            </div>
+          </div>
+
+          <div className="flex h-52 items-end gap-2">
+            {prog.map((item) => {
+              const barHeight = Math.max((item.calories / maxCal) * 100, item.calories > 0 ? 8 : 4);
+              const isActive = item.calories > 0;
+              return (
+                <div key={item.date} className="group flex min-w-0 flex-1 flex-col items-center justify-end gap-2">
+                  <div className="relative flex h-full w-full items-end justify-center">
+                    <div
+                      className="w-full rounded-t-2xl transition-all"
+                      style={{
+                        height: `${barHeight}%`,
+                        background: isActive
+                          ? "linear-gradient(180deg,#00D4AA,rgba(0,212,170,0.14))"
+                          : "rgba(255,255,255,0.08)",
+                        boxShadow: isActive ? "0 0 14px rgba(0,212,170,0.18)" : "none",
+                      }}
+                    />
+                    <div
+                      className="absolute -top-12 left-1/2 hidden -translate-x-1/2 rounded-xl border border-white/10 bg-black/80 px-2 py-1 text-center text-white group-hover:block"
+                      style={{ fontSize: 10, whiteSpace: "nowrap" }}
+                    >
+                      {Math.round(item.calories)} kcal
+                      <br />
+                      {Math.round(item.score)}/100
+                    </div>
+                  </div>
+                  <div className="text-white/35" style={{ fontSize: 10 }}>
+                    {formatShortDate(item.date)}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </GlassCard>
+
+        <GlassCard className="p-6">
+          <div className="mb-5 flex items-center justify-between">
+            <div>
+              <h3 className="text-white" style={{ fontSize: 16, fontWeight: 600 }}>
+                Qualité par exercice
+              </h3>
+              <div className="text-white/45" style={{ fontSize: 11 }}>
+                Scores bornés et recalculés sur 100
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {quality.length > 0 ? (
+              quality.map((item) => {
+                const score = Math.round(clampScore(item.score));
+                const color = score >= 75 ? "#00D4AA" : score >= 50 ? "#FFD166" : "#FF6B4A";
+                return (
+                  <div key={item.exercise}>
+                    <div className="mb-1.5 flex items-center justify-between gap-3 text-white/70" style={{ fontSize: 12 }}>
+                      <span className="truncate">{item.exercise}</span>
+                      <span style={{ color, fontWeight: 700 }}>{score}%</span>
+                    </div>
+                    <div className="h-2.5 overflow-hidden rounded-full bg-white/5">
+                      <div className="h-full rounded-full" style={{ width: `${score}%`, background: color, boxShadow: `0 0 12px ${color}88` }} />
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="rounded-2xl border border-white/6 bg-white/3 px-4 py-5 text-white/40" style={{ fontSize: 13 }}>
+                Fais des séances pour voir ta qualité par exercice.
+              </div>
+            )}
+          </div>
+        </GlassCard>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <GlassCard className="p-6">
+          <h3 className="mb-4 text-white" style={{ fontSize: 16, fontWeight: 600 }}>
+            Ce que tu maîtrises
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {strengths.length > 0 ? (
+              strengths.map((item) => (
+                <Pill key={item.exercise} tone="good">
+                  {item.exercise} · {Math.round(item.score)}%
+                </Pill>
+              ))
+            ) : (
+              <span className="text-white/40" style={{ fontSize: 13 }}>
+                Aucun point fort lisible pour l'instant.
+              </span>
+            )}
+          </div>
+        </GlassCard>
+
+        <GlassCard className="p-6">
+          <h3 className="mb-4 text-white" style={{ fontSize: 16, fontWeight: 600 }}>
+            Points à renforcer
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {weaknesses.length > 0 ? (
+              weaknesses.map((item) => (
+                <Pill key={item.exercise} tone="warn">
+                  {item.exercise} · {Math.round(item.score)}%
+                </Pill>
+              ))
+            ) : (
+              <span className="text-white/40" style={{ fontSize: 13 }}>
+                Pas assez de données pour établir des axes d'amélioration.
+              </span>
+            )}
+          </div>
+        </GlassCard>
+      </div>
+
+      <GlassCard className="p-6">
+        <div className="mb-5 flex items-center justify-between">
+          <div>
+            <h3 className="text-white" style={{ fontSize: 16, fontWeight: 600 }}>
+              Séances récentes
+            </h3>
+            <div className="text-white/45" style={{ fontSize: 11 }}>
+              Les dernières séances enregistrées
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {recent.length > 0 ? (
+            recent.map((item, index) => (
+              <div
+                key={`${item.date}-${index}`}
+                className="flex flex-col gap-4 rounded-3xl border border-white/6 bg-white/3 px-4 py-4 sm:flex-row sm:items-center"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="text-white" style={{ fontSize: 14, fontWeight: 600 }}>
+                    {formatSessionDate(item.date)}
+                  </div>
+                  <div className="mt-1 flex flex-wrap gap-3 text-white/45" style={{ fontSize: 11 }}>
+                    <span>{formatDuration(item.duration_sec)}</span>
+                    <span>{Math.round(item.calories)} kcal</span>
+                    <span style={{ color: item.score >= 80 ? "#00D4AA" : item.score >= 60 ? "#FFD166" : "#FF6B4A" }}>{item.note}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 self-start sm:self-center">
+                  <QualityRing value={Math.round(item.score)} size={48} stroke={4} />
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="rounded-2xl border border-white/6 bg-white/3 px-4 py-5 text-white/40" style={{ fontSize: 13 }}>
+              Aucune séance enregistrée.
+            </div>
+          )}
+        </div>
+      </GlassCard>
+    </div>
+  );
+}
+
+function MiniStat({
+  icon,
+  label,
+  value,
+  tone,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  tone: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-white/8 bg-white/4 p-4">
+      <div className="flex items-center gap-2" style={{ color: tone, fontSize: 12, fontWeight: 600 }}>
+        {icon}
+        {label}
+      </div>
+      <div className="mt-3 text-white" style={{ fontFamily: "Space Grotesk", fontSize: 24, fontWeight: 700 }}>
+        {value}
+      </div>
+    </div>
+  );
+}

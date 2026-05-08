@@ -1,0 +1,841 @@
+================================================================================
+         CAHIER DES CHARGES — COACH FITNESS IA (VERSION 2.0)
+         Mise à jour et extension d'un système existant
+================================================================================
+
+Document      : Cahier des charges technique et fonctionnel
+Version       : 2.0
+Statut        : Mise à jour d'un projet existant (v1.0 → v2.0)
+Date          : Avril 2026
+Domaine       : Intelligence Artificielle appliquée — Vision par ordinateur
+               Santé numérique — Systèmes interactifs temps réel
+
+
+================================================================================
+TABLE DES MATIÈRES
+================================================================================
+
+  1. Contexte et présentation du projet
+  2. État de l'existant (Version 1.0)
+  3. Objectifs de la mise à jour (Version 2.0)
+  4. Périmètre fonctionnel
+  5. Spécifications des exercices physiques
+  6. Spécifications techniques détaillées
+  7. Architecture du système
+  8. Contraintes et exigences non fonctionnelles
+  9. Livrables attendus
+ 10. Critères de validation et d'acceptation
+ 11. Risques et mesures d'atténuation
+ 12. Glossaire
+
+
+================================================================================
+1. CONTEXTE ET PRÉSENTATION DU PROJET
+================================================================================
+
+1.1 Présentation générale
+--------------------------
+Ce projet s'inscrit dans le cadre d'un mémoire de fin d'études portant sur
+l'application de l'intelligence artificielle dans le domaine de la santé et
+du sport. Il consiste en le développement d'un système de coaching fitness
+intelligent, fonctionnant en temps réel via webcam, capable de guider un
+utilisateur lors de ses séances d'exercices physiques.
+
+Le système analyse la posture corporelle de l'utilisateur grâce à des
+techniques de vision par ordinateur et d'estimation de pose humaine. Il
+fournit un retour correctif immédiat, tant visuel que sonore, et assure un
+suivi longitudinal de la progression de l'utilisateur.
+
+1.2 Motivation
+--------------
+L'accès à un coach sportif personnel demeure coûteux et peu accessible pour
+une grande partie de la population. Ce projet vise à démocratiser un suivi
+sportif de qualité en proposant un outil autonome, fonctionnant entièrement
+hors ligne, basé sur des technologies libres et accessibles.
+
+1.3 Public cible
+----------------
+- Étudiants et jeunes adultes souhaitant s'entraîner à domicile
+- Personnes ne pouvant pas accéder à une salle de sport
+- Individus cherchant un suivi personnalisé et abordable
+- Contexte académique : démonstration dans le cadre d'une soutenance de mémoire
+
+
+================================================================================
+2. ÉTAT DE L'EXISTANT (VERSION 1.0)
+================================================================================
+
+2.1 Description de la version actuelle
+----------------------------------------
+Une première version fonctionnelle du système a déjà été développée. Elle
+constitue la base sur laquelle s'appuie la présente mise à jour.
+
+2.2 Fonctionnalités déjà implémentées
+---------------------------------------
+- Capture vidéo en temps réel via webcam (OpenCV)
+- Estimation de pose corporelle (MediaPipe Pose — 33 points de repère)
+- Calcul angulaire sur les articulations clés (NumPy)
+- Détection de la qualité d'exécution pour 3 exercices :
+    * Squat (Flexion des jambes)
+    * Push-up (Pompe)
+    * Bicep Curl (Flexion des biceps)
+- Retour visuel :
+    * Affichage en vert si l'exercice est correctement exécuté
+    * Affichage en rouge avec message correctif si l'exécution est incorrecte
+- Encouragements textuels affichés à l'écran
+
+2.3 Technologies utilisées (v1.0)
+-----------------------------------
+- Langage       : Python 3.x
+- Vision        : OpenCV, MediaPipe Pose
+- Calcul        : NumPy
+- Affichage     : OpenCV (cv2.imshow)
+
+2.4 Limitations identifiées de la v1.0
+----------------------------------------
+- Nombre d'exercices limité à 3
+- Absence de profil utilisateur personnalisé
+- Absence de comptage et de validation des répétitions
+- Pas de retour sonore (feedback uniquement textuel/visuel)
+- Aucun suivi de la progression dans le temps
+- Pas de calcul des dépenses caloriques
+- Pas de tableau de bord ni de rapports de séance
+- Interface de sélection d'exercices inexistante
+
+2.5 CONTRAINTE CRITIQUE — Intégrité du moteur vision
+------------------------------------------------------
+Le module de capture vidéo (OpenCV + MediaPipe Pose + calculs angulaires)
+NE DOIT PAS être modifié dans sa structure fondamentale. Toute intégration
+de technologies web (HTML, CSS, JavaScript) dans la partie webcam est
+strictement interdite. Les améliorations apportées à ce module se limiteront
+à l'affinage des seuils angulaires et à l'ajout des nouveaux exercices dans
+le même paradigme de développement (Python pur).
+
+
+================================================================================
+3. OBJECTIFS DE LA MISE À JOUR (VERSION 2.0)
+================================================================================
+
+3.1 Objectif principal
+-----------------------
+Transformer le prototype existant (v1.0) en un système de coaching fitness
+complet, personnalisé et évolutif, prêt à être présenté et soutenu dans le
+cadre d'un mémoire académique.
+
+3.2 Objectifs spécifiques
+--------------------------
+OBJ-01 : Étendre la bibliothèque d'exercices de 3 à 10 exercices
+OBJ-02 : Intégrer un profil utilisateur (âge, taille, poids)
+OBJ-03 : Mettre en place un compteur de répétitions avec validation
+OBJ-04 : Ajouter un système de feedback vocal en temps réel
+OBJ-05 : Implémenter le calcul des calories dépensées par séance
+OBJ-06 : Créer un tableau de bord visuel de suivi de progression
+OBJ-07 : Générer un rapport de séance détaillé
+OBJ-08 : Améliorer la précision des calculs angulaires
+OBJ-09 : Ajouter une détection de fatigue musculaire
+OBJ-10 : Permettre l'export du rapport en fichier PDF
+
+
+================================================================================
+4. PÉRIMÈTRE FONCTIONNEL
+================================================================================
+
+4.1 MODULE 1 — Gestion du profil utilisateur
+---------------------------------------------
+Priorité : Haute | Statut : À créer
+
+Description :
+  Au démarrage du système, l'utilisateur renseigne ses informations
+  personnelles via une interface simple (Tkinter ou terminal).
+
+Données collectées :
+  - Prénom (pour la personnalisation du feedback)
+  - Âge (en années)
+  - Taille (en centimètres)
+  - Poids (en kilogrammes)
+  - Sexe (pour affiner le calcul calorique)
+  - Niveau de forme physique (débutant / intermédiaire / avancé)
+
+Calculs dérivés automatiques :
+  - IMC (Indice de Masse Corporelle) = poids / (taille_m)²
+  - TDEE (Total Daily Energy Expenditure) via formule de Harris-Benedict
+  - Fréquence cardiaque maximale théorique = 220 - âge
+  - Zones caloriques cibles par exercice
+
+Persistance :
+  - Profil sauvegardé localement (SQLite ou JSON)
+  - Rechargement automatique à chaque session
+
+4.2 MODULE 2 — Sélection et paramétrage de la séance
+------------------------------------------------------
+Priorité : Haute | Statut : À créer
+
+Description :
+  Avant chaque séance, l'utilisateur choisit les exercices à réaliser
+  et paramètre le nombre de répétitions.
+
+Fonctionnalités :
+  - Menu de sélection des 10 exercices disponibles
+  - Choix du nombre de répétitions par exercice (valeur par défaut : 10)
+  - Possibilité de réorganiser l'ordre des exercices
+  - Le système peut aussi proposer une séance automatique adaptée
+    au profil (niveau débutant → séance légère, avancé → séance intense)
+  - Affichage du temps estimé de la séance avant de commencer
+
+4.3 MODULE 3 — Moteur de détection et d'analyse (existant — étendu)
+---------------------------------------------------------------------
+Priorité : Critique | Statut : Extension de l'existant
+
+Description :
+  Cœur du système. Capture vidéo en temps réel, estimation de pose,
+  calcul angulaire, évaluation de la qualité d'exécution.
+
+Fonctionnalités maintenues (v1.0) :
+  - Capture webcam via OpenCV
+  - Estimation de pose via MediaPipe Pose (33 landmarks)
+  - Calcul des angles articulaires via NumPy
+  - Affichage visuel (vert / rouge) en overlay sur le flux vidéo
+
+Nouvelles fonctionnalités (v2.0) :
+  - Extension à 10 exercices (voir Section 5)
+  - Compteur de répétitions automatique par exercice
+  - Logique de validation d'une répétition (position haute → basse → haute)
+  - Détection de la dégradation progressive des angles (fatigue)
+  - Marge d'erreur angulaire configurable par exercice
+  - Affichage du compteur en temps réel sur le flux vidéo
+  - Passage automatique à l'exercice suivant quand le quota est atteint
+
+4.4 MODULE 4 — Système de feedback vocal
+-----------------------------------------
+Priorité : Haute | Statut : À créer
+
+Description :
+  Retour audio en temps réel, complémentaire au retour visuel existant.
+  Fonctionne entièrement hors ligne grâce à la synthèse vocale locale.
+
+Technologie : pyttsx3 (Text-to-Speech offline, multiplateforme)
+Exécution   : Thread séparé pour éviter tout blocage du flux vidéo
+
+Messages positifs (exemples) :
+  - "Très bien, continue comme ça !"
+  - "Parfait, excellente posture !"
+  - "Bravo, tu y es presque !"
+  - "Répétition [N] validée, super travail !"
+
+Messages correctifs (exemples) :
+  - "Descends plus bas, plie davantage les genoux"
+  - "Garde le dos bien droit"
+  - "Écarte un peu plus les coudes"
+  - "Attention, tu commences à te fatiguer, prends une pause"
+
+Règles de déclenchement :
+  - Message positif : déclenché toutes les 3 répétitions validées
+  - Message correctif : déclenché si la mauvaise posture persiste
+    pendant plus de 2 secondes consécutives
+  - Annonce de la fin d'un exercice et du suivant
+  - Anti-spam : délai minimum de 3 secondes entre deux messages vocaux
+
+4.5 MODULE 5 — Calcul des dépenses caloriques
+----------------------------------------------
+Priorité : Haute | Statut : À créer
+
+Description :
+  Estimation des calories brûlées pour chaque exercice et pour
+  l'ensemble de la séance, personnalisée selon le profil utilisateur.
+
+Formule utilisée (MET — Metabolic Equivalent of Task) :
+  Calories = MET × poids_kg × durée_heure
+
+Valeurs MET par exercice :
+  - Squat (Flexion des jambes)        : MET = 5.0
+  - Push-up (Pompe)                   : MET = 8.0
+  - Bicep Curl (Flexion des biceps)   : MET = 3.5
+  - Lunge (Fente avant)               : MET = 6.0
+  - Shoulder Press (Développé épaules): MET = 5.5
+  - Lateral Raise (Élévation latérale): MET = 3.5
+  - Tricep Extension (Extension triceps): MET = 4.0
+  - Plank (Gainage)                   : MET = 4.0
+  - Mountain Climber (Grimpeur)       : MET = 8.0
+  - Deadlift (Soulevé de terre)       : MET = 6.0
+
+Sorties :
+  - Calories brûlées par exercice
+  - Calories totales de la séance
+  - Comparaison avec l'objectif calorique quotidien (TDEE)
+  - Indicateur en pourcentage de l'objectif atteint
+
+4.6 MODULE 6 — Persistance des données
+----------------------------------------
+Priorité : Haute | Statut : À créer
+
+Description :
+  Sauvegarde locale de toutes les données de séances pour permettre
+  le suivi longitudinal de la progression.
+
+Technologie : SQLite3 (base de données embarquée, stdlib Python)
+
+Structure de la base de données :
+  Table UTILISATEUR :
+    - id, prenom, age, taille, poids, sexe, niveau, date_creation
+
+  Table SEANCE :
+    - id, id_utilisateur, date, duree_totale_sec, calories_totales,
+      score_global (0-100), note_qualite
+
+  Table EXERCICE_SEANCE :
+    - id, id_seance, nom_exercice, reps_cibles, reps_realisees,
+      reps_validees, duree_sec, calories, score_qualite,
+      angle_moyen, angle_min, angle_max
+
+  Table PROGRESSION_JOURNALIERE :
+    - id, id_utilisateur, date, calories_totales, nb_exercices,
+      score_moyen, duree_totale
+
+4.7 MODULE 7 — Tableau de bord de progression
+----------------------------------------------
+Priorité : Haute | Statut : À créer
+
+Description :
+  Interface graphique affichée en fin de séance ou à la demande,
+  présentant la progression de l'utilisateur sur plusieurs jours.
+
+Technologie : Matplotlib
+
+Graphiques inclus :
+  - Courbe des calories brûlées par jour (sur 30 jours)
+  - Histogramme du nombre de répétitions validées par exercice
+  - Courbe du score de forme global par séance
+  - Évolution de la qualité angulaire par exercice (précision)
+  - Fréquence des séances (nombre de séances par semaine)
+  - Comparaison objectif calorique vs calories réelles (barre de progression)
+
+Fonctionnalités :
+  - Sélection de la période d'affichage (7j / 14j / 30j)
+  - Affichage des tendances (progression ou régression)
+  - Export du dashboard en image PNG
+
+4.8 MODULE 8 — Rapport de séance
+---------------------------------
+Priorité : Haute | Statut : À créer
+
+Description :
+  Rapport détaillé généré automatiquement à la fin de chaque séance,
+  présentant un bilan complet des performances.
+
+Technologie : fpdf2 (génération PDF) + affichage terminal
+
+Contenu du rapport :
+  Section 1 — Résumé de séance :
+    - Date et heure
+    - Durée totale
+    - Nombre d'exercices réalisés
+    - Calories totales brûlées
+    - Score global de la séance (0–100)
+
+  Section 2 — Détail par exercice :
+    - Répétitions cibles vs réalisées vs validées
+    - Score de qualité (%)
+    - Angle moyen mesuré vs angle cible
+    - Statut : Maîtrisé / À améliorer / Insuffisant
+
+  Section 3 — Points forts :
+    - Liste des exercices avec un score > 80%
+    - Compétences techniques bien maîtrisées
+
+  Section 4 — Axes d'amélioration :
+    - Liste des exercices avec un score < 60%
+    - Conseils correctifs personnalisés par exercice
+
+  Section 5 — Recommandations pour la prochaine séance :
+    - Exercices à renforcer
+    - Ajustement suggéré du nombre de répétitions
+    - Conseil hygiène de vie si applicable (repos, hydratation)
+
+4.9 MODULE 9 — Détection de fatigue (bonus)
+---------------------------------------------
+Priorité : Moyenne | Statut : À créer
+
+Description :
+  Analyse de la dégradation progressive des angles au fil des
+  répétitions pour détecter l'apparition de la fatigue musculaire.
+
+Méthode :
+  - Calcul de la variation angulaire entre les 3 premières et
+    les 3 dernières répétitions d'un même exercice
+  - Si dégradation > 15% → alerte fatigue déclenchée
+  - Message vocal d'avertissement + suggestion de pause
+
+Sortie :
+  - Indicateur de fatigue dans le rapport de séance
+  - Rep à partir de laquelle la fatigue a été détectée
+
+
+================================================================================
+5. SPÉCIFICATIONS DES EXERCICES PHYSIQUES
+================================================================================
+
+Chaque exercice est défini par :
+  - Les points de repère MediaPipe surveillés
+  - Les angles articulaires cibles (position correcte)
+  - Les angles d'erreur (seuils déclenchant le feedback correctif)
+  - La logique de comptage d'une répétition validée
+  - Le message correctif associé à chaque erreur
+
+La marge d'erreur angulaire générale est de ± 15°.
+
+------------------------------------------------------------------------------
+EXERCICE 1 — Squat (Flexion des jambes) [EXISTANT — À AFFINER]
+------------------------------------------------------------------------------
+Description     : Flexion complète des genoux, dos droit, pieds écartés
+Articulations   : Hanche, genou, cheville (bilatéral)
+Points MediaPipe: 23-25-27 (hanche-genou-cheville gauche)
+                  24-26-28 (hanche-genou-cheville droite)
+
+Angles cibles :
+  - Position basse (validée) : angle genou entre 70° et 100°
+  - Position haute (repos)   : angle genou > 160°
+
+Erreurs détectées et messages :
+  - Genou trop peu fléchi (> 110°) : "Descends plus bas, plie davantage les genoux"
+  - Dos non vertical (angle torse < 150°) : "Garde le dos bien droit, ne te penche pas en avant"
+  - Genoux en valgus (vers l'intérieur) : "Pousse les genoux vers l'extérieur"
+
+Validation d'une répétition : Position haute → Position basse → Position haute
+
+------------------------------------------------------------------------------
+EXERCICE 2 — Push-up (Pompe) [EXISTANT — À AFFINER]
+------------------------------------------------------------------------------
+Description     : Flexion-extension des bras en appui au sol
+Articulations   : Épaule, coude, poignet
+Points MediaPipe: 11-13-15 (épaule-coude-poignet gauche)
+                  12-14-16 (épaule-coude-poignet droit)
+
+Angles cibles :
+  - Position basse (validée) : angle coude entre 70° et 100°
+  - Position haute (repos)   : angle coude > 155°
+
+Erreurs détectées et messages :
+  - Coude pas assez fléchi (> 110°) : "Descends plus bas, coude à 90 degrés"
+  - Hanches trop basses ou trop hautes : "Garde le corps bien aligné, comme une planche"
+  - Coudes trop écartés : "Rapproche légèrement les coudes du corps"
+
+Validation d'une répétition : Position haute → Position basse → Position haute
+
+------------------------------------------------------------------------------
+EXERCICE 3 — Bicep Curl (Flexion des biceps) [EXISTANT — À AFFINER]
+------------------------------------------------------------------------------
+Description     : Flexion de l'avant-bras en tenant un poids, coude fixe
+Articulations   : Épaule, coude, poignet
+Points MediaPipe: 11-13-15 (épaule-coude-poignet gauche/droit)
+
+Angles cibles :
+  - Position haute (validée) : angle coude entre 30° et 60°
+  - Position basse (repos)   : angle coude > 150°
+
+Erreurs détectées et messages :
+  - Coude qui bouge vers l'avant : "Fixe bien le coude contre le corps"
+  - Amplitude incomplète vers le bas : "Descends complètement le bras pour étirer le biceps"
+  - Élan du corps : "Évite de balancer le corps, mouvement contrôlé"
+
+Validation d'une répétition : Position basse → Position haute → Position basse
+
+------------------------------------------------------------------------------
+EXERCICE 4 — Lunge (Fente avant) [NOUVEAU]
+------------------------------------------------------------------------------
+Description     : Pas en avant avec flexion du genou avant jusqu'à 90°
+Articulations   : Hanche avant, genou avant, cheville avant
+Points MediaPipe: 23-25-27 (jambe gauche) ou 24-26-28 (jambe droite)
+                  11-23-25 (angle torse-hanche-genou)
+
+Angles cibles :
+  - Genou avant (validé)  : entre 80° et 100°
+  - Torse vertical        : angle > 160°
+
+Erreurs détectées et messages :
+  - Genou avant dépasse la pointe du pied : "Attention, le genou ne doit pas dépasser le pied"
+  - Dos penché en avant : "Reste bien droit, torse vertical"
+  - Genou arrière trop haut : "Abaisse davantage le genou arrière"
+
+Validation d'une répétition : Position debout → Fente basse → Position debout
+
+------------------------------------------------------------------------------
+EXERCICE 5 — Shoulder Press (Développé épaules) [NOUVEAU]
+------------------------------------------------------------------------------
+Description     : Extension verticale des bras au-dessus de la tête
+Articulations   : Épaule, coude
+Points MediaPipe: 11-13-15 (gauche) et 12-14-16 (droit)
+                  13-11-23 (angle coude-épaule-hanche)
+
+Angles cibles :
+  - Position haute (validée) : angle coude > 155°, bras quasi tendus
+  - Position basse (repos)   : angle coude entre 80° et 100°
+
+Erreurs détectées et messages :
+  - Bras non tendus en haut : "Étends bien les bras au-dessus de la tête"
+  - Coudes trop bas au départ : "Commence avec les coudes à hauteur d'épaule"
+  - Cambure excessive du dos : "Évite de cambrer le dos, contracte les abdominaux"
+
+Validation d'une répétition : Position basse → Position haute → Position basse
+
+------------------------------------------------------------------------------
+EXERCICE 6 — Lateral Raise (Élévation latérale) [NOUVEAU]
+------------------------------------------------------------------------------
+Description     : Montée des bras tendus sur les côtés jusqu'à hauteur d'épaule
+Articulations   : Épaule (angle hanche-épaule-coude)
+Points MediaPipe: 23-11-13 (hanche-épaule-coude gauche)
+                  24-12-14 (hanche-épaule-coude droit)
+
+Angles cibles :
+  - Position haute (validée) : angle entre 80° et 110° (bras à l'horizontal)
+  - Position basse (repos)   : angle < 30°
+
+Erreurs détectées et messages :
+  - Bras trop hauts (> 120°) : "Ne monte pas les bras au-dessus des épaules"
+  - Bras trop bas en haut (< 70°) : "Monte les bras jusqu'à la hauteur des épaules"
+  - Coudes fléchis : "Garde les bras tendus pendant le mouvement"
+
+Validation d'une répétition : Position basse → Position haute → Position basse
+
+------------------------------------------------------------------------------
+EXERCICE 7 — Tricep Extension (Extension triceps) [NOUVEAU]
+------------------------------------------------------------------------------
+Description     : Extension verticale du bras derrière la tête (triceps)
+Articulations   : Épaule, coude (angle épaule-coude-poignet)
+Points MediaPipe: 11-13-15 (gauche) ou 12-14-16 (droit)
+
+Angles cibles :
+  - Position haute/extension (validée) : angle coude > 155°
+  - Position basse/flexion (repos)     : angle coude < 70°
+
+Erreurs détectées et messages :
+  - Extension incomplète : "Tends complètement le bras vers le haut"
+  - Coude qui s'écarte : "Garde le coude fixe, pointé vers le plafond"
+  - Amplitude insuffisante en bas : "Descends plus bas pour étirer le triceps"
+
+Validation d'une répétition : Position basse → Extension → Position basse
+
+------------------------------------------------------------------------------
+EXERCICE 8 — Plank (Gainage) [NOUVEAU — exercice temporel]
+------------------------------------------------------------------------------
+Description     : Position de planche, corps aligné, maintenu dans le temps
+Articulations   : Épaule, hanche, cheville (alignement global)
+Points MediaPipe: 11-23-27 (épaule-hanche-cheville gauche)
+
+Angles cibles :
+  - Corps bien aligné (validé) : angle épaule-hanche-cheville entre 165° et 180°
+
+Note : Cet exercice est basé sur le temps (durée de maintien) et non sur
+des répétitions. Le comptage est en secondes. L'objectif par défaut est 30s.
+
+Erreurs détectées et messages :
+  - Hanches trop hautes (> 185°) : "Abaisse légèrement les hanches"
+  - Hanches trop basses (< 150°) : "Monte les hanches, garde le corps droit"
+  - Tête non alignée (angle cou) : "Regarde vers le sol, aligne la tête avec la colonne"
+
+Validation : Maintien de la position correcte pendant la durée cible
+
+------------------------------------------------------------------------------
+EXERCICE 9 — Mountain Climber (Grimpeur) [NOUVEAU]
+------------------------------------------------------------------------------
+Description     : En position de planche, alternance genoux vers la poitrine
+Articulations   : Hanche, genou (angle hanche-genou-cheville)
+Points MediaPipe: 23-25-27 (gauche) et 24-26-28 (droit)
+                  11-23-25 (alignement dos)
+
+Angles cibles :
+  - Genou ramené (validé)  : angle hanche-genou < 80°
+  - Genou étendu (repos)   : angle > 150°
+  - Dos aligné en planche  : angle épaule-hanche-cheville > 165°
+
+Erreurs détectées et messages :
+  - Corps non aligné : "Garde le corps en planche, ne lève pas les fesses"
+  - Amplitude genou insuffisante : "Ramène le genou plus près de la poitrine"
+  - Mouvement trop lent : indication dans le rapport uniquement
+
+Validation d'une répétition : Genou gauche ramené + genou droit ramené = 1 rep
+
+------------------------------------------------------------------------------
+EXERCICE 10 — Deadlift (Soulevé de terre) [NOUVEAU]
+------------------------------------------------------------------------------
+Description     : Flexion avant du tronc avec dos droit, charge au sol
+Articulations   : Dos (épaule-hanche-cheville), genou
+Points MediaPipe: 11-23-27 (épaule-hanche-cheville gauche)
+                  25-23-11 (genou-hanche-épaule)
+
+Angles cibles :
+  - Position basse (validée)  : angle genou entre 80° et 110°
+  - Dos droit                 : angle épaule-hanche > 155° (dos plat)
+  - Position haute (repos)    : corps vertical, angle > 170°
+
+Erreurs détectées et messages :
+  - Dos arrondi (< 140°) : "Attention ! Garde le dos plat, ne courbe pas la colonne"
+  - Genoux trop droits    : "Plie davantage les genoux en descendant"
+  - Tête basse            : "Regarde devant toi, aligne le cou avec la colonne"
+
+Validation d'une répétition : Position haute → Position basse → Position haute
+
+
+================================================================================
+6. SPÉCIFICATIONS TECHNIQUES DÉTAILLÉES
+================================================================================
+
+6.1 Langage et environnement
+------------------------------
+  - Langage       : Python 3.10 ou supérieur
+  - Environnement : Windows / Linux / macOS
+  - Mode          : 100% hors ligne (aucune dépendance cloud)
+  - Matériel      : Webcam USB ou intégrée (résolution minimale 640×480)
+
+6.2 Dépendances Python
+------------------------
+  Bibliothèque          Version min.   Usage
+  ─────────────────────────────────────────────────────────────
+  opencv-python         4.8+           Capture webcam, affichage
+  mediapipe             0.10+          Estimation de pose (33 pts)
+  numpy                 1.24+          Calculs angulaires
+  pyttsx3               2.90+          Synthèse vocale offline (TTS)
+  matplotlib            3.7+           Dashboard et graphiques
+  fpdf2                 2.7+           Génération de rapports PDF
+  tkinter               (stdlib)       Interface profil utilisateur
+  sqlite3               (stdlib)       Persistance des données
+  threading             (stdlib)       Parallelisme voix / vision
+  ─────────────────────────────────────────────────────────────
+
+6.3 Calcul angulaire — méthode
+--------------------------------
+L'angle entre trois points A, B, C (B = sommet de l'angle) est calculé
+via le produit scalaire des vecteurs BA et BC :
+
+  vecteur_BA = A - B
+  vecteur_BC = C - B
+  cosinus = dot(BA, BC) / (||BA|| × ||BC||)
+  angle = arccos(cosinus) × (180 / π)
+
+La détection des coordonnées utilise les landmarks 3D de MediaPipe Pose
+(x, y, z normalisés) pour améliorer la robustesse aux changements de point
+de vue caméra.
+
+Filtre de lissage : moyenne glissante sur 5 frames pour réduire le bruit
+angulaire et limiter les faux positifs de détection.
+
+6.4 Compteur de répétitions — logique d'état
+---------------------------------------------
+Un automate à états finis gère le comptage :
+
+  État REPOS    : position initiale / haute de l'exercice
+  État DESCENTE : transition vers la position travaillée
+  État BAS      : position travaillée atteinte et maintenue (≥ 3 frames)
+  État MONTEE   : retour vers la position initiale
+
+  Transition validée : REPOS → DESCENTE → BAS → MONTEE → REPOS
+  → Compteur += 1
+
+Conditions de validation strictes :
+  - L'angle doit rester dans la zone cible pendant au moins 3 frames
+  - Les deux côtés (gauche/droit) doivent être validés simultanément
+    pour les exercices bilatéraux
+  - Un délai minimum de 0.5 seconde entre deux répétitions consécutives
+
+6.5 Architecture des threads
+-----------------------------
+  Thread Principal (Thread-1) :
+    - Capture et traitement vidéo OpenCV
+    - Calcul MediaPipe et angles
+    - Affichage temps réel (cv2.imshow)
+    - Mise à jour du compteur
+
+  Thread Vocal (Thread-2) :
+    - Écoute d'une file de messages (queue.Queue)
+    - Synthèse et lecture audio via pyttsx3
+    - N'interrompt jamais le Thread principal
+
+  Thread Dashboard (Thread-3, à la demande) :
+    - Lecture de la base SQLite
+    - Génération des graphiques Matplotlib
+    - Affiché en fenêtre séparée
+
+6.6 Score de qualité d'exécution (0–100)
+-----------------------------------------
+  score = (reps_validees / reps_realisees) × 70
+        + (1 - delta_angulaire_moyen / 30) × 30
+
+  Où delta_angulaire_moyen = écart moyen entre l'angle mesuré et
+  l'angle cible sur l'ensemble des répétitions de l'exercice.
+
+  Score global de séance = moyenne pondérée des scores par exercice
+
+
+================================================================================
+7. ARCHITECTURE DU SYSTÈME
+================================================================================
+
+  Coach_Fitness_v2/
+  │
+  ├── main.py                    # Point d'entrée principal
+  │
+  ├── config/
+  │   ├── settings.py            # Paramètres globaux (seuils, chemins, etc.)
+  │   └── exercises_config.py    # Configuration angulaire des 10 exercices
+  │
+  ├── modules/
+  │   ├── user_profile.py        # Gestion du profil utilisateur (Tkinter)
+  │   ├── pose_engine.py         # Moteur MediaPipe + calculs angulaires
+  │   ├── exercise_detector.py   # Détection qualité + compteur par exercice
+  │   ├── rep_counter.py         # Automate de comptage des répétitions
+  │   ├── voice_feedback.py      # Synthèse vocale (pyttsx3 + queue)
+  │   ├── calorie_calculator.py  # Calcul MET et dépenses caloriques
+  │   ├── fatigue_detector.py    # Détection de la dégradation angulaire
+  │   └── session_manager.py     # Orchestration de la séance complète
+  │
+  ├── database/
+  │   ├── db_manager.py          # Connexion et requêtes SQLite
+  │   ├── models.py              # Schémas des tables
+  │   └── fitness_data.db        # Base de données locale (auto-créée)
+  │
+  ├── dashboard/
+  │   ├── dashboard.py           # Tableau de bord Matplotlib
+  │   └── report_generator.py    # Génération rapport PDF (fpdf2)
+  │
+  ├── assets/
+  │   └── fonts/                 # Polices pour le rapport PDF
+  │
+  └── outputs/
+      └── reports/               # Rapports PDF générés
+
+
+================================================================================
+8. CONTRAINTES ET EXIGENCES NON FONCTIONNELLES
+================================================================================
+
+8.1 Performance
+----------------
+  - Fréquence d'analyse : ≥ 25 FPS sur un PC standard (Core i5 / 8 Go RAM)
+  - Latence du feedback vocal : < 1.5 seconde après détection d'une erreur
+  - Délai de sauvegarde SQLite : < 0.2 seconde (opération non bloquante)
+  - Démarrage du système : < 10 secondes
+
+8.2 Précision de détection
+---------------------------
+  - Taux de faux positifs (rep invalidée à tort)  : < 5%
+  - Taux de faux négatifs (rep manquée)           : < 8%
+  - Précision angulaire après filtrage            : ± 10° maximum
+  - Conditions d'éclairage minimales              : pièce normalement éclairée
+
+8.3 Fiabilité
+--------------
+  - Aucune perte de données de séance en cas de fermeture imprévue
+    (sauvegarde incrémentale toutes les 30 secondes)
+  - Gestion des erreurs si MediaPipe ne détecte pas la personne
+    (message à l'écran : "Positionnez-vous devant la caméra")
+  - Protection contre les doublons de profil
+
+8.4 Portabilité
+----------------
+  - Compatible Windows 10/11, Ubuntu 20.04+, macOS 12+
+  - Aucune connexion internet requise
+  - Installation via pip uniquement (requirements.txt fourni)
+
+8.5 Maintenabilité
+-------------------
+  - Code commenté en français
+  - Chaque exercice défini dans un fichier de configuration séparé
+    pour faciliter l'ajout de nouveaux exercices
+  - Tests unitaires pour les modules de calcul angulaire
+    et de comptage (pytest)
+
+
+================================================================================
+9. LIVRABLES ATTENDUS
+================================================================================
+
+  LIV-01 : Code source complet et documenté (Python)
+  LIV-02 : Fichier requirements.txt (toutes les dépendances)
+  LIV-03 : Base de données SQLite initialisée (schéma prêt)
+  LIV-04 : Manuel d'installation et d'utilisation (README.md)
+  LIV-05 : Rapport de séance exemple (PDF généré)
+  LIV-06 : Captures d'écran du tableau de bord
+  LIV-07 : Documentation technique des angles par exercice
+  LIV-08 : Présentation pour la soutenance (diagrammes d'architecture)
+
+
+================================================================================
+10. CRITÈRES DE VALIDATION ET D'ACCEPTATION
+================================================================================
+
+  CRIT-01 : Les 10 exercices sont détectés et comptés correctement
+            → Test : 10 répétitions de chaque exercice, comptage exact
+
+  CRIT-02 : Le feedback vocal se déclenche sans bloquer le flux vidéo
+            → Test : maintien de 25 FPS pendant un retour vocal
+
+  CRIT-03 : Le profil utilisateur est sauvegardé et rechargé correctement
+            → Test : fermeture et réouverture de l'application
+
+  CRIT-04 : Les calories sont calculées et varient selon le poids
+            → Test : deux profils de poids différents, mêmes exercices
+
+  CRIT-05 : Le tableau de bord affiche des données réelles de plusieurs séances
+            → Test : 5 séances simulées, courbe de progression visible
+
+  CRIT-06 : Le rapport PDF est généré et contient toutes les sections
+            → Test : vérification manuelle du contenu du PDF
+
+  CRIT-07 : Le système détecte une mauvaise posture et affiche le message
+            → Test : exécution volontairement incorrecte des exercices
+
+  CRIT-08 : Le flux vidéo reste fluide en toutes circonstances
+            → Test : mesure du FPS moyen sur une séance de 10 minutes
+
+
+================================================================================
+11. RISQUES ET MESURES D'ATTÉNUATION
+================================================================================
+
+  RISQUE-01 : Mauvaise détection des poses dans des conditions d'éclairage
+              faibles ou avec des vêtements sombres
+  → Atténuation : Filtre de lissage angulaire + message utilisateur
+                  recommandant une pièce bien éclairée
+
+  RISQUE-02 : Blocage du flux vidéo par la synthèse vocale
+  → Atténuation : Exécution dans un thread séparé avec file de messages
+
+  RISQUE-03 : Angles mal calibrés pour certaines morphologies (grande taille,
+              surpoids important)
+  → Atténuation : Marges d'erreur élargies (± 15°) + paramètre de
+                  calibration par niveau d'utilisateur
+
+  RISQUE-04 : Corruption de la base de données SQLite
+  → Atténuation : Sauvegarde JSON en parallèle comme backup
+
+  RISQUE-05 : Fréquence d'images insuffisante sur un PC peu puissant
+  → Atténuation : Mode dégradé (résolution réduite 480p, moins de landmarks)
+
+
+================================================================================
+12. GLOSSAIRE
+================================================================================
+
+  IMC          : Indice de Masse Corporelle (kg/m²)
+  TDEE         : Total Daily Energy Expenditure — dépense énergétique
+                 journalière totale
+  MET          : Metabolic Equivalent of Task — équivalent métabolique
+                 d'une activité (1 MET = 1 kcal/kg/heure au repos)
+  MediaPipe    : Bibliothèque Google d'estimation de pose corporelle
+                 (33 points anatomiques détectés en temps réel)
+  Landmark     : Point anatomique détecté par MediaPipe sur le corps
+                 humain (ex : épaule, genou, coude)
+  TTS          : Text-To-Speech — synthèse vocale à partir de texte
+  OpenCV       : Open Computer Vision — bibliothèque de traitement
+                 d'images et de vidéos
+  FPS          : Frames Per Second — nombre d'images par seconde traitées
+  SQLite       : Système de gestion de base de données légère embarquée
+  Automate FSM : Finite State Machine — automate à états finis (logique
+                 de comptage des répétitions)
+  Valgus       : Déviation d'un membre vers l'intérieur (ex : genoux
+                 qui se rapprochent lors d'un squat)
+
+
+================================================================================
+                        FIN DU CAHIER DES CHARGES
+               Coach Fitness IA — Version 2.0 — Avril 2026
+================================================================================

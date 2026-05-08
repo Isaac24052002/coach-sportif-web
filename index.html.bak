@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#121a23">
+  <title>Coach Fitness IA Web</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="/static/brand.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="stylesheet" href="/static/css/app.css">
+  <script type="module" src="/static/js/app.js"></script>
+</head>
+<body data-theme="ember">
+  <section class="auth-shell" id="authShell">
+    <div class="auth-backdrop"></div>
+    <div class="auth-layout">
+      <aside class="auth-showcase card">
+        <div class="brand brand-large">
+          <div class="logo">CF</div>
+          <div>
+            <p class="eyebrow">Coach fitness IA</p>
+            <h1>Studio Motion</h1>
+            <p class="subtitle">Une experience de coaching web epoustouflante, construite pour laisser la seance face camera respirer et rester parfaitement lisible.</p>
+          </div>
+        </div>
+        <div class="auth-copy">
+          <article class="showcase-card">
+            <span>Vue degagee</span>
+            <strong>Une scene camera tres propre sur mobile, tablette et PC.</strong>
+          </article>
+          <article class="showcase-card">
+            <span>Progression</span>
+            <strong>Calories, qualite, corrections, historique et conseils au meme endroit.</strong>
+          </article>
+          <article class="showcase-card">
+            <span>Personnalisation</span>
+            <strong>Theme, profil, plan d entrainement et rythme adaptes a chaque utilisateur.</strong>
+          </article>
+        </div>
+      </aside>
+
+      <div class="auth-card card">
+        <div class="auth-tabs">
+          <button class="auth-tab active" type="button" data-auth-tab="login">Connexion</button>
+          <button class="auth-tab" type="button" data-auth-tab="register">Inscription</button>
+        </div>
+
+        <form class="auth-form" id="loginForm">
+          <div class="form-head">
+            <p class="eyebrow">Heureux de te revoir</p>
+            <h2>Connecte-toi</h2>
+          </div>
+          <label class="stacked">Email
+            <input type="email" id="loginEmail" placeholder="isaac@email.com" autocomplete="email">
+          </label>
+          <label class="stacked">Mot de passe
+            <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
+          </label>
+          <button class="primary auth-submit" type="submit">Entrer dans l application</button>
+        </form>
+
+        <form class="auth-form" id="registerForm" hidden>
+          <div class="form-head">
+            <p class="eyebrow">Premiere visite</p>
+            <h2>Cree ton compte</h2>
+          </div>
+          <div class="profile-grid auth-grid">
+            <label>Prenom
+              <input type="text" id="registerFirstName" placeholder="Isaac" autocomplete="given-name">
+            </label>
+            <label>Email
+              <input type="email" id="registerEmail" placeholder="isaac@email.com" autocomplete="email">
+            </label>
+            <label>Mot de passe
+              <input type="password" id="registerPassword" placeholder="6 caracteres minimum" autocomplete="new-password">
+            </label>
+            <label>Age
+              <input type="number" id="registerAge" value="24" min="10" max="90">
+            </label>
+            <label>Taille (cm)
+              <input type="number" id="registerHeight" value="183" min="120" max="230">
+            </label>
+            <label>Poids (kg)
+              <input type="number" id="registerWeight" value="75" min="35" max="200">
+            </label>
+            <label>Sexe
+              <select id="registerSex">
+                <option value="M">M</option>
+                <option value="F">F</option>
+              </select>
+            </label>
+            <label>Niveau
+              <select id="registerLevel">
+                <option value="debutant">debutant</option>
+                <option value="intermediaire">intermediaire</option>
+                <option value="avance">avance</option>
+              </select>
+            </label>
+            <label>Theme
+              <select id="registerTheme"></select>
+            </label>
+          </div>
+          <button class="primary auth-submit" type="submit">Creer mon espace</button>
+        </form>
+
+        <div class="auth-message" id="authMessage">Inscris-toi ou connecte-toi pour acceder a ton studio.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="app-shell" id="appShell" hidden>
+    <header class="app-header card">
+      <div class="brand">
+        <div class="logo">CF</div>
+        <div>
+          <p class="eyebrow">Coach fitness IA</p>
+          <h2>Studio Motion</h2>
+        </div>
+      </div>
+
+      <nav class="main-nav" id="mainNav">
+        <button class="nav-link active" type="button" data-view="home">Accueil</button>
+        <button class="nav-link" type="button" data-view="session">Seance live</button>
+        <button class="nav-link" type="button" data-view="progress">Progression</button>
+        <button class="nav-link" type="button" data-view="profile">Profil</button>
+        <button class="nav-link" type="button" data-view="settings">Parametres</button>
+      </nav>
+
+      <div class="header-actions">
+        <div class="user-badge">
+          <span id="headerUserName">Coach</span>
+          <small id="headerUserLevel">debutant</small>
+        </div>
+        <button class="ghost small" id="headerThemeButton" type="button">Theme</button>
+        <button class="ghost small" id="logoutButton" type="button">Se deconnecter</button>
+      </div>
+    </header>
+
+    <main class="view-shell">
+      <section class="view active" id="homeView">
+        <div class="home-hero card">
+          <div>
+            <p class="eyebrow">Accueil</p>
+            <h2 id="welcomeHeadline">Bienvenue</h2>
+            <p class="hero-copy" id="welcomeSubline">Un studio de coaching personnel avec un espace seance aere et des retours clairs.</p>
+            <div class="hero-actions">
+              <button class="primary" id="heroStartSession" type="button">Lancer une seance</button>
+              <button class="ghost" id="heroGoProgress" type="button">Voir ma progression</button>
+            </div>
+          </div>
+          <div class="hero-panel">
+            <span class="hero-kicker">Prochaine action</span>
+            <strong id="heroNextAction">Prepare ta prochaine session.</strong>
+            <div class="hero-blueprint" id="blueprintList"></div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <section class="card panel">
+            <h3>Vue rapide</h3>
+            <div class="metric-grid">
+              <article class="metric-card">
+                <span>Sessions</span>
+                <strong id="homeSessionsValue">0</strong>
+              </article>
+              <article class="metric-card">
+                <span>Calories 14j</span>
+                <strong id="homeCaloriesValue">0</strong>
+              </article>
+              <article class="metric-card">
+                <span>Temps 14j</span>
+                <strong id="homeDurationValue">0 min</strong>
+              </article>
+              <article class="metric-card">
+                <span>Score moyen</span>
+                <strong id="homeScoreValue">0</strong>
+              </article>
+            </div>
+          </section>
+
+          <section class="card panel">
+            <h3>Ce que tu maitrises</h3>
+            <div class="stack-list" id="strengthList"></div>
+          </section>
+
+          <section class="card panel">
+            <h3>A corriger</h3>
+            <div class="stack-list" id="improvementList"></div>
+          </section>
+
+          <section class="card panel">
+            <h3>Derniere seance</h3>
+            <div class="session-list" id="lastSessionCard"></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" id="sessionView">
+        <div class="session-topbar card">
+          <div class="session-topbar-copy">
+            <p class="eyebrow">Seance live</p>
+            <h2 class="stage-title" id="stageTitle">Studio pret</h2>
+            <p class="session-caption" id="stageNotice">Choisis ton plan et lance la camera. En mode focus, presque tout disparait pour te laisser seul face au mouvement.</p>
+          </div>
+          <div class="session-tools">
+            <select id="cameraFacingSelect" aria-label="Choix de camera">
+              <option value="user">Camera avant</option>
+              <option value="environment">Camera arriere</option>
+            </select>
+            <button class="primary" id="startButton" type="button">Demarrer</button>
+            <button id="stopButton" type="button" disabled>Terminer</button>
+            <button class="ghost" id="focusButton" type="button">Focus</button>
+            <button class="ghost" id="voiceButton" type="button">Voix active</button>
+          </div>
+        </div>
+
+        <section class="card studio-stage">
+          <div class="stage-meta-row">
+            <span class="chip status" id="statusChip">Statut: pret</span>
+            <span class="chip" id="timerChip">Temps: 00:00</span>
+            <span class="chip" id="progressChip">Progression: 0%</span>
+            <span class="pill warn" id="lightPill">Lumiere: attente</span>
+            <span class="pill warn" id="framePill">Cadre: attente</span>
+            <span class="pill" id="fpsPill">FPS: --</span>
+            <span class="chip warn" id="focusChip">Mode: normal</span>
+          </div>
+
+          <div class="stage-frame is-mirrored" id="stageFrame" aria-label="Apercu camera">
+            <video id="cameraVideo" playsinline muted></video>
+            <canvas id="overlayCanvas"></canvas>
+            <div class="stage-overlay">
+              <div class="stage-grid"></div>
+              <div class="stage-frame-guide"></div>
+              <div class="stage-vignette"></div>
+            </div>
+            <div class="stage-topline">Mode studio: vue large et degagee pour suivre ton mouvement sans distraction.</div>
+            <div class="stage-hud">
+              <div class="hud-card">
+                <p class="hud-title">Coach live</p>
+                <p class="hud-main" id="coachLine">Place-toi bien au centre, garde la tete et les pieds visibles, puis lance la seance.</p>
+                <p class="hud-sub" id="coachHint">Le focus masque quasiment tout pour retrouver la sensation d une simple app webcam sportive.</p>
+              </div>
+              <div class="hud-card ring-shell">
+                <div class="metric-ring" id="qualityRing"><span id="qualityValue">0%</span></div>
+                <p class="hud-sub center">Qualite globale</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="dock">
+            <button class="primary" id="dockStartButton" type="button">Demarrer</button>
+            <button id="dockStopButton" type="button" disabled>Terminer</button>
+            <button class="ghost" id="dockFocusButton" type="button">Focus</button>
+            <button class="ghost" id="dockVoiceButton" type="button">Voix</button>
+          </div>
+
+          <div class="stage-dashboard">
+            <article class="mini-stat">
+              <span class="mini-label">Exercice</span>
+              <strong class="mini-value" id="objectiveValue">0 / 0</strong>
+            </article>
+            <article class="mini-stat">
+              <span class="mini-label">Validees</span>
+              <strong class="mini-value" id="validRepsValue">0</strong>
+            </article>
+            <article class="mini-stat">
+              <span class="mini-label">Invalides</span>
+              <strong class="mini-value" id="invalidRepsValue">0</strong>
+            </article>
+            <article class="mini-stat">
+              <span class="mini-label">Orientation</span>
+              <strong class="mini-value" id="orientationValue">-</strong>
+            </article>
+            <article class="mini-stat">
+              <span class="mini-label">Angle</span>
+              <strong class="mini-value" id="angleValue">--</strong>
+            </article>
+            <article class="mini-stat">
+              <span class="mini-label">Calories</span>
+              <strong class="mini-value" id="caloriesValue">0.0</strong>
+            </article>
+          </div>
+
+          <div class="session-progress">
+            <div class="session-progress-head">
+              <span>Progression de seance</span>
+              <strong id="sessionProgressValue">0%</strong>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" id="sessionProgressBar"></div>
+            </div>
+          </div>
+        </section>
+
+        <div class="session-bottom-grid">
+          <section class="card panel">
+            <div class="panel-head">
+              <h3>Plan de seance</h3>
+              <button class="ghost small" id="autoPlanButton" type="button">Plan auto</button>
+            </div>
+            <div class="exercise-picker" id="exercisePicker"></div>
+            <div class="plan-tools">
+              <button class="ghost small" id="selectAllButton" type="button">Tout cocher</button>
+              <button class="ghost small" id="clearPlanButton" type="button">Tout vider</button>
+              <span class="plan-estimate" id="estimatedTimeValue">Temps estime: 0 sec</span>
+            </div>
+            <div class="plan-composer" id="planComposer"></div>
+          </section>
+
+          <section class="card coach-card warn" id="coachCard">
+            <p class="coach-title">Coach</p>
+            <p class="coach-message" id="coachMessage">Session inactive. Prepare ton plan et ta lumiere, puis lance la camera.</p>
+            <p class="coach-hint" id="coachSub">Le mode focus retire le superflu pour te laisser un espace de travail tres propre face a la webcam.</p>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" id="progressView">
+        <div class="progress-grid">
+          <section class="card panel">
+            <h3>Indicateurs</h3>
+            <div class="metric-grid">
+              <article class="metric-card">
+                <span>Sessions</span>
+                <strong id="sessionsTotalValue">0</strong>
+              </article>
+              <article class="metric-card">
+                <span>Calories 14j</span>
+                <strong id="caloriesTotalValue">0</strong>
+              </article>
+              <article class="metric-card">
+                <span>Temps 14j</span>
+                <strong id="durationTotalValue">0 min</strong>
+              </article>
+              <article class="metric-card">
+                <span>Score moyen</span>
+                <strong id="scoreTotalValue">0</strong>
+              </article>
+            </div>
+          </section>
+
+          <section class="card panel">
+            <div class="chart-head">
+              <h3>Calories par jour</h3>
+              <strong>14 jours</strong>
+            </div>
+            <div class="bar-list" id="progressChart"></div>
+          </section>
+
+          <section class="card panel">
+            <div class="chart-head">
+              <h3>Qualite par exercice</h3>
+              <strong>30 jours</strong>
+            </div>
+            <div class="bar-list" id="qualityChart"></div>
+          </section>
+
+          <section class="card panel">
+            <div class="chart-head">
+              <h3>Dernieres seances</h3>
+              <strong>Recent</strong>
+            </div>
+            <div class="session-list" id="recentSessions"></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" id="profileView">
+        <div class="settings-grid">
+          <section class="card panel">
+            <div class="panel-head">
+              <h3>Profil</h3>
+              <button class="primary small" id="saveProfileButton" type="button">Mettre a jour</button>
+            </div>
+            <div class="profile-grid">
+              <label>Prenom
+                <input type="text" id="firstNameInput">
+              </label>
+              <label>Age
+                <input type="number" id="ageInput" min="10" max="90">
+              </label>
+              <label>Taille (cm)
+                <input type="number" id="heightInput" min="120" max="230">
+              </label>
+              <label>Poids (kg)
+                <input type="number" id="weightInput" min="35" max="200">
+              </label>
+              <label>Sexe
+                <select id="sexInput">
+                  <option value="M">M</option>
+                  <option value="F">F</option>
+                </select>
+              </label>
+              <label>Niveau
+                <select id="levelInput">
+                  <option value="debutant">debutant</option>
+                  <option value="intermediaire">intermediaire</option>
+                  <option value="avance">avance</option>
+                </select>
+              </label>
+            </div>
+          </section>
+
+          <section class="card panel">
+            <h3>Metriques personnelles</h3>
+            <div class="metric-grid">
+              <article class="metric-card">
+                <span>IMC</span>
+                <strong id="imcValue">0.0</strong>
+              </article>
+              <article class="metric-card">
+                <span>TDEE</span>
+                <strong id="tdeeValue">0</strong>
+              </article>
+              <article class="metric-card">
+                <span>FC max</span>
+                <strong id="hrValue">0</strong>
+              </article>
+              <article class="metric-card">
+                <span>Email</span>
+                <strong id="profileEmailValue">-</strong>
+              </article>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" id="settingsView">
+        <div class="settings-grid">
+          <section class="card panel">
+            <div class="panel-head">
+              <h3>Theme</h3>
+              <button class="ghost small" id="headerThemeDuplicate" type="button">Changer vite</button>
+            </div>
+            <div class="theme-grid" id="themeGrid"></div>
+          </section>
+
+          <section class="card panel">
+            <h3>Preferences</h3>
+            <div class="settings-stack">
+              <button class="ghost settings-button" id="settingsVoiceButton" type="button">Feedback vocal active</button>
+              <button class="ghost settings-button" id="settingsFocusButton" type="button">Activer le mode focus</button>
+              <button class="ghost settings-button" id="settingsGoSessionButton" type="button">Aller a la seance live</button>
+              <button class="ghost settings-button" id="settingsLogoutButton" type="button">Se deconnecter</button>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+  </section>
+
+  <section class="summary-sheet" id="summarySheet" hidden>
+    <div class="summary-backdrop" id="summaryBackdrop"></div>
+    <div class="summary-panel">
+      <div class="summary-head">
+        <div>
+          <p class="eyebrow">Resume final</p>
+          <h2>Seance terminee</h2>
+        </div>
+        <button class="ghost small" id="closeSummaryButton" type="button">Fermer</button>
+      </div>
+      <div class="summary-grid" id="summaryMetrics"></div>
+      <div class="session-list" id="summaryWarnings"></div>
+      <div class="summary-actions" id="summaryExports"></div>
+      <div class="summary-list" id="summaryExercises"></div>
+    </div>
+  </section>
+</body>
+</html>

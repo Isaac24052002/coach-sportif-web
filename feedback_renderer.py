@@ -88,12 +88,21 @@ def _dessiner_barre_progression(
 
 def dessiner_panneau_stats(image, donnees_stats: dict[str, str | float | int | None]) -> None:
     """Affiche les statistiques de seance dans un panneau fixe en haut a gauche."""
-    _dessiner_rectangle_transparent(image, (12, 12), (460, 285), config.COULEUR_NOIR, 0.45)
+    _dessiner_rectangle_transparent(image, (12, 12), (460, 320), config.COULEUR_NOIR, 0.45)
 
     angle = donnees_stats.get("angle_principal")
     angle_texte = "-" if angle is None else f"{angle:.1f}"
     taux_reussite = float(donnees_stats.get("taux_reussite", 0.0) or 0.0)
     repetitions_invalides = int(donnees_stats.get("repetitions_invalides", 0) or 0)
+    objectif = int(donnees_stats.get("objectif", 0) or 0)
+    mode_objectif = str(donnees_stats.get("mode_objectif", "reps"))
+    temps_tenu = float(donnees_stats.get("temps_tenu_sec", 0.0) or 0.0)
+    fatigue_detectee = bool(donnees_stats.get("fatigue_detectee", False))
+
+    if mode_objectif == "time":
+        progression = f"{temps_tenu:.0f}s / {objectif}s"
+    else:
+        progression = f"{donnees_stats.get('repetitions_correctes', 0)} / {objectif}"
 
     lignes = [
         f"Exercice: {donnees_stats.get('nom_exercice', '-')}",
@@ -102,8 +111,10 @@ def dessiner_panneau_stats(image, donnees_stats: dict[str, str | float | int | N
         f"Reps correctes: {donnees_stats.get('repetitions_correctes', 0)}",
         f"Reps totales: {donnees_stats.get('repetitions_totales', 0)}",
         f"Reps invalides: {repetitions_invalides}",
+        f"Objectif: {progression}",
         f"Taux correct: {taux_reussite:.1f}%",
         f"Etat mouvement: {donnees_stats.get('etat_mouvement', '-')}",
+        f"Fatigue: {'oui' if fatigue_detectee else 'non'}",
         f"Angle principal: {angle_texte}",
         f"FPS: {donnees_stats.get('fps', 0.0):.1f}",
         f"Duree: {donnees_stats.get('duree_sec', 0.0):.1f}s",
@@ -123,11 +134,11 @@ def dessiner_panneau_stats(image, donnees_stats: dict[str, str | float | int | N
         )
         y += 22
 
-    _dessiner_barre_progression(image, (24, 246), (250, 14), taux_reussite, 100.0, config.COULEUR_VERT)
+    _dessiner_barre_progression(image, (24, 282), (250, 14), taux_reussite, 100.0, config.COULEUR_VERT)
     cv2.putText(
         image,
         "Qualite",
-        (282, 258),
+        (282, 294),
         cv2.FONT_HERSHEY_SIMPLEX,
         0.48,
         config.COULEUR_BLANC,
@@ -136,11 +147,11 @@ def dessiner_panneau_stats(image, donnees_stats: dict[str, str | float | int | N
     )
 
     if angle is not None:
-        _dessiner_barre_progression(image, (24, 266), (250, 12), float(angle), 180.0, config.COULEUR_BLEU_CLAIR)
+        _dessiner_barre_progression(image, (24, 302), (250, 12), float(angle), 180.0, config.COULEUR_BLEU_CLAIR)
         cv2.putText(
             image,
             "Amplitude angle",
-            (282, 277),
+            (282, 314),
             cv2.FONT_HERSHEY_SIMPLEX,
             0.46,
             config.COULEUR_BLANC,
@@ -199,16 +210,24 @@ def dessiner_message_principal(
     )
 
 
-def dessiner_menu_exercices(image, exercice_actuel: str, profil_actif: str = config.PROFIL_DEMO_PAR_DEFAUT) -> None:
+def dessiner_menu_exercices(
+    image,
+    exercice_actuel: str,
+    profil_actif: str = config.PROFIL_DEMO_PAR_DEFAUT,
+    exercice_suivant: str | None = None,
+) -> None:
     """Affiche les touches de controle de l'application."""
     hauteur, largeur = image.shape[:2]
 
     lignes = [
-        "1 Squat | 2 Push-up | 3 Curl",
+        "1 Squat | 2 Push-up | 3 Curl | 4 Lunge | 5 Shoulder Press",
+        "6 Lateral Raise | 7 Tricep Ext | 8 Plank | 9 Mountain Climber | 0 Deadlift",
         "Q Quitter la session",
         f"Profil: {profil_actif.capitalize()}",
         f"Actif: {config.EXERCICES[exercice_actuel]['nom']}",
     ]
+    if exercice_suivant:
+        lignes.append(f"Suivant: {config.EXERCICES[exercice_suivant]['nom']}")
 
     largeur_max_texte = max(cv2.getTextSize(ligne, cv2.FONT_HERSHEY_SIMPLEX, 0.58, 1)[0][0] for ligne in lignes)
     x1 = max(12, largeur - (largeur_max_texte + 42))
@@ -217,7 +236,7 @@ def dessiner_menu_exercices(image, exercice_actuel: str, profil_actif: str = con
     _dessiner_rectangle_transparent(
         image,
         (x1, 12),
-        (x2, 190),
+        (x2, 230),
         config.COULEUR_NOIR,
         0.45,
     )
@@ -234,4 +253,4 @@ def dessiner_menu_exercices(image, exercice_actuel: str, profil_actif: str = con
             1,
             cv2.LINE_AA,
         )
-        y += 35
+        y += 30

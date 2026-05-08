@@ -1,0 +1,17 @@
+{
+  "name": "Coach Fitness IA Web",
+  "short_name": "CoachFit",
+  "description": "Application web responsive de coaching fitness avec camera et analyse de posture.",
+  "display": "standalone",
+  "background_color": "#0b1116",
+  "theme_color": "#121a23",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "/static/brand.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

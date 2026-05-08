@@ -1,52 +1,22 @@
-# Coach Sportif Temps Reel - Pose Analysis
+# Coach Fitness IA
 
-Application Python locale qui analyse la posture via webcam en temps reel avec **MediaPipe Pose + OpenCV**.
+Coach fitness avec analyse de posture, plan de seance, suivi utilisateur et exports de fin de session.
 
-Le projet detecte automatiquement l'orientation (face, profil gauche, profil droit), analyse trois exercices, affiche un feedback visuel immediat et exporte un rapport de seance.
+Le projet propose maintenant deux experiences:
 
-## Exercices couverts
+- `python main.py` pour la version locale OpenCV/terminal
+- `python3 web_app.py` pour la version web responsive avec camera navigateur
 
-- `1` Squat
-- `2` Push-up
-- `3` Bicep curl
+## Points forts
 
-## Fonctionnalites principales
-
-- Detection de pose en temps reel (33 landmarks)
-- Detection auto orientation face/profil selon la visibilite des landmarks
-- Analyse articulaire par angles (genou, coude, alignement)
-- Optimisation anti faux positifs: etat neutre au repos, anti-jitter, amplitude minimale de repetition
-- Squat optimise: validation de profondeur + alignement du dos adapte a la profondeur
-- Squat optimise: suivi genou/cheville normalise (morphologie/camera) pour limiter les faux rejets
-- Feedback visuel instantane:
-  - Squelette vert si geste correct
-  - Squelette rouge si geste incorrect
-  - Squelette ambre en etat neutre (repos/instructions)
-  - Message precis (ex: `Descends plus bas`, `Dos trop penche`, `Epaule qui bouge`)
-- Compteur de repetitions via machine a etats (`haut` / `bas`)
-- Panneau statistiques premium en temps reel (FPS lisse, reps invalides, jauges qualite/amplitude)
-- Export de fin de seance:
-  - rapport CSV
-  - historique JSON
-  - video demo `.mp4`
-
-## Stack technique
-
-- Python 3.10+
-- opencv-python 4.8+
-- mediapipe 0.10.32
-- numpy 1.24+
-
-## Structure du projet
-
-- `main.py` boucle principale webcam, clavier, rendu, export
-- `pose_detector.py` wrapper MediaPipe, landmarks, orientation
-- `angle_calculator.py` calcul des angles et distances
-- `exercise_analyzer.py` regles exercices + machine a etats
-- `feedback_renderer.py` overlays OpenCV (stats, message, menu)
-- `session_logger.py` generation CSV/JSON et nommage video
-- `config.py` constantes, seuils, couleurs
-- `requirements.txt` dependances
+- Interface web premium, fluide et responsive sur mobile, tablette et PC
+- Ecran d inscription / connexion avant l acces a l application
+- Navigation complete: accueil, seance live, progression, profil, parametres
+- Mode focus pour une vue camera tres degagee pendant l exercice
+- Webcam navigateur + squelette temps reel dans l interface
+- Reutilisation du moteur Python existant pour les repetitions, la qualite et la progression
+- Profils utilisateurs SQLite, historique, resume final et exports CSV/JSON/PDF/dashboard
+- Themes visuels personnalisables et deconnexion locale
 
 ## Installation
 
@@ -56,70 +26,68 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Lancement
+## Lancer la version web
+
+```bash
+python3 web_app.py
+```
+
+Puis ouvre:
+
+```text
+http://127.0.0.1:8000
+```
+
+Pour exposer le serveur sur le reseau local:
+
+```bash
+python3 web_app.py --host 0.0.0.0 --port 8000
+```
+
+## Mobile et tablette
+
+Pour utiliser la camera sur un telephone ou une tablette:
+
+- `localhost` fonctionne sur l appareil lui-meme
+- via reseau local, beaucoup de navigateurs exigent `HTTPS` pour autoriser la camera
+
+En pratique: pour un vrai usage mobile distant, prevois un acces HTTPS.
+
+## Lancer la version terminal historique
 
 ```bash
 python main.py
 ```
 
-Option camera specifique:
+Options utiles:
 
 ```bash
-python main.py --camera 1
-```
-
-Demarrer sur un exercice cible:
-
-```bash
-python main.py --exercice pushup
-```
-
-Choisir un profil de coaching:
-
-```bash
-python main.py --profil equilibre
-```
-
-Par defaut, l'application demarre en profil `strict`.
-
-Profils disponibles:
-
-- `strict` : validation exigeante (forme prioritaire)
-- `equilibre` : compromis precision/fluidite (recommande)
-- `tolerant` : validation plus souple pour demo fluide
-
-En mode `strict`, une faute detectee pendant la repetition invalide immediatement le cycle.
-
-Desactiver l'enregistrement video:
-
-```bash
+python main.py --plan-auto
+python main.py --sans-voix
+python main.py --sans-dashboard
 python main.py --sans-enregistrement
 ```
 
-## Commandes clavier
+## Structure web ajoutee
 
-- `1` -> Squat
-- `2` -> Push-up
-- `3` -> Bicep curl
-- `q` -> Quitter la session
+- `web_app.py` : backend FastAPI et API live
+- `web_pose_utils.py` : orientation/cadrage sans MediaPipe Python
+- `index.html` : shell de l application web
+- `static/css/app.css` : theme responsive
+- `static/js/app.js` : camera, pose web et orchestration UI
+- `manifest.webmanifest` : base PWA
 
-## Conseils de demo (important)
+## Exports
 
-- Pour un comptage fiable des repetitions, place-toi de profil (gauche ou droit) pour les 3 exercices.
-- Au repos, le systeme reste en etat neutre et n'encourage pas de fausse repetition.
-- Pour le squat, la profondeur et l'alignement du dos sont evalues ensemble avec une tolerance dynamique.
-- Le profil actif est affiche dans le panneau stats et dans le menu de droite.
+Les fichiers de fin de seance restent ecrits dans `sorties/`:
 
-## Fichiers generes
-
-Tous les exports sont dans le dossier `sorties/`:
-
-- `demo_seance_YYYYMMDD_HHMMSS.mp4`
 - `rapport_seance_YYYYMMDD_HHMMSS.csv`
 - `historique_seance_YYYYMMDD_HHMMSS.json`
+- `rapport_seance_YYYYMMDD_HHMMSS.pdf`
+- `dashboard_YYYYMMDD_HHMMSS.png`
 
-## Remarques
+## Notes
 
-- L'application est 100% locale (pas d'internet necessaire)
-- Aucun GPU obligatoire
-- Le rendu est entierement dans la fenetre OpenCV (pas de GUI externe)
+- La version web n utilise pas `pose_detector.py` pour la camera: la pose est detectee dans le navigateur, puis analysee par le moteur Python du projet.
+- Le moteur web MediaPipe est charge via le module officiel `@mediapipe/tasks-vision` cote navigateur.
+- La version terminal existante reste disponible si tu veux continuer a utiliser OpenCV directement.

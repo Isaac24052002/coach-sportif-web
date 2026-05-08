@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">Coach Fitness IA</title>
+  <desc id="desc">Monogramme orange et sable sur fond sombre.</desc>
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f46845"/>
+      <stop offset="100%" stop-color="#ffd166"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="32" fill="#101820"/>
+  <circle cx="64" cy="64" r="42" fill="none" stroke="url(#g)" stroke-width="10" opacity="0.85"/>
+  <path d="M84 44c-4-6-12-10-22-10-18 0-30 12-30 30s12 30 30 30c10 0 18-4 22-10" fill="none" stroke="url(#g)" stroke-linecap="round" stroke-width="12"/>
+  <path d="M54 64h30" stroke="#f6f2e9" stroke-width="10" stroke-linecap="round"/>
+</svg>
