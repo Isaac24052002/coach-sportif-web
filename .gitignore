@@ -12,7 +12,7 @@ coach_front/build/
 *.db-wal
 
 # Env
-.env
+.venv
 
 # Logs
 *.log
