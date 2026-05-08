@@ -1,6 +1,6 @@
 // ── API Client — Studio Motion ──────────────────────────────────────────────
 // L'API N'utilise PAS de token JWT. Même origine : FastAPI sert le build React.
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+//const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 async function parseResponseBody<T>(res: Response): Promise<T> {
   if (res.status === 204) return undefined as T;
@@ -95,40 +95,37 @@ export interface RegisterPayload {
 export interface LoginPayload { email: string; mot_de_passe: string; }
 
 export const authRegister = (p: RegisterPayload) =>
-  req(`${API_BASE_URL}/api/auth/register`, {
-  method: "POST",
-  body: JSON.stringify(p)
-});
+  req<APIUserView>("/api/auth/register", { method: "POST", body: JSON.stringify(p) });
 export const authLogin = (p: LoginPayload) =>
-  req<APIUserView>(`${API_BASE_URL}/api/auth/login`, { method: "POST", body: JSON.stringify(p) });
+  req<APIUserView>("/api/auth/login", { method: "POST", body: JSON.stringify(p) });
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
 export interface BootstrapData {
   app_name: string; version?: string; themes: unknown[]; exercises: unknown[];
   camera: { width: number; height: number; fps: number };
 }
-export const bootstrap = () => req<BootstrapData>(`${API_BASE_URL}/api/bootstrap`);
+export const bootstrap = () => req<BootstrapData>("/api/bootstrap");
 
 // ── Users ─────────────────────────────────────────────────────────────────────
 export const getUserOverview = (userId: number) =>
-  req<APIUserView>(`${API_BASE_URL}/api/users/${userId}/overview`);
+  req<APIUserView>(`/api/users/${userId}/overview`);
 
 export interface UpdateProfilePayload {
   id?: number; prenom: string; age: number; taille_cm: number; poids_kg: number; sexe: string; niveau: string;
 }
 // PUT /api/users/{id}/profile
 export const updateProfile = (userId: number, p: UpdateProfilePayload) =>
-  req<APIUserView>(`${API_BASE_URL}/api/users/${userId}/profile`, { method: "PUT", body: JSON.stringify({ ...p, id: userId }) });
+  req<APIUserView>(`/api/users/${userId}/profile`, { method: "PUT", body: JSON.stringify({ ...p, id: userId }) });
 // PATCH /api/users/{id}/theme
 export const updateTheme = (userId: number, theme: string) =>
-  req<APIUserView>(`${API_BASE_URL}/api/users/${userId}/theme`, { method: "PATCH", body: JSON.stringify({ theme }) });
+  req<APIUserView>(`/api/users/${userId}/theme`, { method: "PATCH", body: JSON.stringify({ theme }) });
 export const deleteUserAccount = async (userId: number) => {
   try {
-    return await req<{ deleted: boolean; message: string }>(`${API_BASE_URL}/api/users/${userId}/delete`, { method: "POST" });
+    return await req<{ deleted: boolean; message: string }>(`/api/users/${userId}/delete`, { method: "POST" });
   } catch (error: any) {
     const message = String(error?.message ?? "");
     if (message.includes("404") || message.includes("Compte introuvable")) throw error;
-    return req<{ deleted: boolean; message: string }>(`${API_BASE_URL}/api/users/${userId}`, { method: "DELETE" });
+    return req<{ deleted: boolean; message: string }>(`/api/users/${userId}`, { method: "DELETE" });
   }
 };
 
@@ -137,7 +134,7 @@ export interface ExerciseDef {
   key: string; name: string; mode: string; default_target: number; target_label: string; met: number; touch: string;
 }
 export const getExercises = () =>
-  req<{ exercises: ExerciseDef[]; total: number }>(`${API_BASE_URL}/api/exercises`).then((r) => r.exercises);
+  req<{ exercises: ExerciseDef[]; total: number }>("/api/exercises").then((r) => r.exercises);
 
 // ── Auto-plan ─────────────────────────────────────────────────────────────────
 export interface PlanItem { key: string; name: string; mode: string; target: number; target_label: string; }
@@ -145,7 +142,7 @@ export interface AutoPlanResponse { items: PlanItem[]; estimated_sec: number; }
 
 // POST /api/plans/auto — nécessite le profil complet
 export const getAutoPlan = (profile: APIUserView["profile"]) =>
-  req<AutoPlanResponse>(`${API_BASE_URL}/api/plans/auto`, {
+  req<AutoPlanResponse>("/api/plans/auto", {
     method: "POST",
     body: JSON.stringify({ id: profile.id, prenom: profile.prenom, age: profile.age, taille_cm: profile.taille_cm, poids_kg: profile.poids_kg, sexe: profile.sexe, niveau: profile.niveau }),
   });
@@ -176,9 +173,9 @@ export interface AnalyzePayload {
 }
 
 export const createSession = (p: SessionCreatePayload) =>
-  req<{ session_id: string } & Record<string, unknown>>(`${API_BASE_URL}/api/sessions`, { method: "POST", body: JSON.stringify(p) });
+  req<{ session_id: string } & Record<string, unknown>>("/api/sessions", { method: "POST", body: JSON.stringify(p) });
 export const analyzeFrame = (sessionId: string, p: AnalyzePayload) =>
-  req<LiveResponse>(`${API_BASE_URL}/api/sessions/${sessionId}/analyze`, { method: "POST", body: JSON.stringify(p) });
+  req<LiveResponse>(`/api/sessions/${sessionId}/analyze`, { method: "POST", body: JSON.stringify(p) });
 
 // ── Finish ────────────────────────────────────────────────────────────────────
 export interface ExerciseResult {
@@ -193,4 +190,4 @@ export interface FinishResponse {
   insights: Record<string, unknown>;
 }
 export const finishSession = (sessionId: string) =>
-  req<FinishResponse>(`${API_BASE_URL}/api/sessions/${sessionId}/finish`, { method: "POST" });
+  req<FinishResponse>(`/api/sessions/${sessionId}/finish`, { method: "POST" });
