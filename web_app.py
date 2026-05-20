@@ -1563,16 +1563,20 @@ async def ws_analyze(websocket: WebSocket, session_id: str) -> None:
 
 
 def parse_args() -> argparse.Namespace:
-    def env_int(name: str, default: int) -> int:
+    def env_int(name: str, default: int | None = None) -> int | None:
         raw = os.getenv(name, "")
+        if raw == "":
+            return default
         try:
             return int(raw)
         except (TypeError, ValueError):
             return default
 
     parser = argparse.ArgumentParser(description="KUME - Serveur web")
-    parser.add_argument("--host", default=os.getenv("APP_HOST", "127.0.0.1"), help="Hote d'ecoute")
-    parser.add_argument("--port", type=int, default=env_int("APP_PORT", 8000), help="Port HTTP")
+    default_port = env_int("APP_PORT", env_int("PORT", 8000))
+    default_host = os.getenv("APP_HOST") or ("0.0.0.0" if os.getenv("PORT") else "127.0.0.1")
+    parser.add_argument("--host", default=default_host, help="Hote d'ecoute")
+    parser.add_argument("--port", type=int, default=default_port, help="Port HTTP")
     return parser.parse_args()
 
 
