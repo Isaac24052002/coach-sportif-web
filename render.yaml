@@ -4,15 +4,7 @@ services:
     env: docker
     dockerfilePath: ./Dockerfile
     autoDeploy: true
-    disk:
-      name: kume-data
-      mountPath: /app/donnees
-      sizeGB: 1
     envVars:
-      - key: APP_HOST
-        value: 0.0.0.0
-      - key: APP_PORT
-        value: 8000
       - key: DB_PATH
         value: /app/donnees/fitness_data.db
       - key: CORS_ORIGINS
