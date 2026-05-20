@@ -1,4 +1,4 @@
-# Coach Fitness IA
+# Coach Fitness KÙMÉ
 
 Coach fitness avec analyse de posture, plan de seance, suivi utilisateur et exports de fin de session.
 

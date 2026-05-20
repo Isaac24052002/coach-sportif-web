@@ -1,14 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
-  <title id="title">Coach Fitness IA</title>
-  <desc id="desc">Monogramme orange et sable sur fond sombre.</desc>
-  <defs>
-    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#f46845"/>
-      <stop offset="100%" stop-color="#ffd166"/>
-    </linearGradient>
-  </defs>
-  <rect width="128" height="128" rx="32" fill="#101820"/>
-  <circle cx="64" cy="64" r="42" fill="none" stroke="url(#g)" stroke-width="10" opacity="0.85"/>
-  <path d="M84 44c-4-6-12-10-22-10-18 0-30 12-30 30s12 30 30 30c10 0 18-4 22-10" fill="none" stroke="url(#g)" stroke-linecap="round" stroke-width="12"/>
-  <path d="M54 64h30" stroke="#f6f2e9" stroke-width="10" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 260" role="img" aria-labelledby="title desc">
+  <title id="title">HuuFit</title>
+  <desc id="desc">Logo HuuFit sur fond transparent avec texte rouge et vert.</desc>
+  <g font-family="Arial Rounded MT Bold, Nunito, Trebuchet MS, sans-serif" font-weight="800" font-size="176" letter-spacing="-12">
+    <text x="74" y="184" fill="#f40308">Huu</text>
+    <text x="444" y="184" fill="#39cb57">Fit</text>
+  </g>
+  <circle cx="624" cy="78" r="30" fill="#f40308"/>
+  <g fill="#39cb57" transform="translate(624 78)">
+    <circle cx="-2" cy="-13" r="5"/>
+    <path d="M-2 -8 L4 2 L-3 14 L-11 26 L-4 29 L4 17 L8 6 L14 20 L22 16 L13 -1 L7 -14 Z"/>
+    <path d="M2 -2 L-10 3 L-8 10 L5 4 Z"/>
+  </g>
 </svg>

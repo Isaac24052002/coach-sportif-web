@@ -1,4 +1,4 @@
-Design a premium AI fitness coaching web app called "Studio Motion — Coach Fitness IA".
+Design a premium AI fitness coaching web app called "Studio Motion — Coach Fitness KÙMÉ".
 
 Product concept: A personal AI coach that uses the device camera to analyze body posture in real time during workouts. It counts reps, detects form errors, gives vocal feedback, tracks calories and progress. Think Whoop meets Mirror meets Apple Fitness+.
 
@@ -21,7 +21,7 @@ Mobile (<768px): Bottom tab bar, 5 tabs with icons + small labels, frosted glass
 Tablet (768–1024px): Collapsed sidebar (icons only).
 Screen 1 — Auth / Onboarding:
 
-Full-screen split: left half = animated abstract mesh background with the logo, tagline ("Ton coach IA qui voit ce que les autres ne voient pas"), 3 feature cards with glassmorphism, and live metrics (10 exercises / 360° analysis / WebSocket real-time / PDF exports)
+Full-screen split: left half = animated abstract mesh background with the logo, tagline ("Ton coach KÙMÉ qui voit ce que les autres ne voient pas"), 3 feature cards with glassmorphism, and live metrics (10 exercises / 360° analysis / WebSocket real-time / PDF exports)
 Right half = floating auth card, rounded 32px, with Login / Register tabs. Clean inputs with floating labels. CTA button full-width, teal gradient.
 On mobile: single screen with logo + tagline at top, auth card below.
 Screen 2 — Dashboard / Home:
@@ -40,7 +40,7 @@ Top-right: FPS pill, Light indicator (OK/Faible), Frame quality (Cadre: OK/Appro
 Bottom-left: Coach message card (glassmorphism, max 2 lines, pulsing coach dot)
 Bottom-right: Circular quality score ring (0–100%, colored green/orange/red)
 Below the camera feed: horizontal stats strip (Exercice actif / Reps validées / Reps invalides / Angle / Calories)
-Bottom panel: Exercise plan (horizontal scrollable chips) on the left, large Coach IA card on the right with coach guidance text
+Bottom panel: Exercise plan (horizontal scrollable chips) on the left, large Coach KÙMÉ card on the right with coach guidance text
 Control bar: Start/Stop buttons (teal/red), Focus toggle (minimize UI for immersion), Voice toggle, Camera flip
 Focus mode: camera goes full screen, all UI fades out except the quality ring and one coach message line
 Screen 4 — Progress / Analytics:

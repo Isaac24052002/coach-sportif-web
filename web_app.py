@@ -1,4 +1,4 @@
-"""Application web responsive pour Coach Fitness IA."""
+"""Application web responsive pour KUME."""
 
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ import argparse
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
+import importlib.util
 import hashlib
 import os
 from pathlib import Path
@@ -17,7 +18,7 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 import uvicorn
-from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, JSONResponse
@@ -37,7 +38,19 @@ from workout_planner import WorkoutExercise, WorkoutPlan, creer_plan_automatique
 BASE_DIR = Path(__file__).resolve().parent
 DOSSIER_STATIQUES = BASE_DIR / "static"
 DOSSIER_EXPORTS = config.DOSSIER_SORTIES
-DB = DatabaseManager(config.DOSSIER_DONNEES / "fitness_data.db")
+
+
+def _split_env_list(value: str) -> list[str]:
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
+DB_PATH = Path(os.getenv("DB_PATH", str(config.DOSSIER_DONNEES / "fitness_data.db")))
+CORS_ORIGINS = _split_env_list(os.getenv("CORS_ORIGINS", "")) or [
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+
+DB = DatabaseManager(DB_PATH)
 
 TEMPS_PAR_REP = 3.0
 TEMPS_PAR_REP_RAPIDE = 2.2
@@ -45,21 +58,11 @@ SESSION_MAX_AGE_SEC = 4 * 60 * 60
 NIVEAUX_VALIDES = {"debutant", "intermediaire", "avance"}
 SEXES_VALIDES = {"M", "F"}
 THEMES = {
-    "ember": {
-        "key": "ember",
-        "label": "Ember Glow",
-        "description": "Ambiance studio chaude, sportive et premium.",
-    },
-    "ocean": {
-        "key": "ocean",
-        "label": "Ocean Pulse",
-        "description": "Un univers frais, net et technologique.",
-    },
-    "dawn": {
-        "key": "dawn",
-        "label": "Dawn Sand",
-        "description": "Une presence lumineuse, douce et elegante.",
-    },
+    "kume": {
+        "key": "kume",
+        "label": "KUME",
+        "description": "Palette claire, verte et douce inspiree de l univers KUME.",
+    }
 }
 MOIS_FR = [
     "janvier",
@@ -136,9 +139,9 @@ async def lifespan(application: FastAPI):
 
 
 app = FastAPI(
-    title="Coach Fitness IA",
+    title="KUME",
     description=(
-        "API haute performance pour le coaching sportif IA. "
+        "API haute performance pour le coaching sportif KUME. "
         "Detection de posture MediaPipe temps reel, score qualite, "
         "suivi repetitions, calories, historique et exports complets."
     ),
@@ -160,7 +163,7 @@ app = FastAPI(
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8000", "http://127.0.0.1:8000"],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
     allow_headers=["*"],
@@ -221,12 +224,18 @@ class RegisterPayload(BaseModel):
     poids_kg: float = Field(ge=35, le=200)
     sexe: str = "M"
     niveau: str = "debutant"
-    theme: str = "ember"
+    theme: str = "kume"
 
 
 class LoginPayload(BaseModel):
     email: str = Field(min_length=5, max_length=120)
     mot_de_passe: str = Field(min_length=6, max_length=120)
+
+
+class LocalAuthPayload(BaseModel):
+    prenom: str = Field(min_length=1, max_length=50)
+    niveau: str = "debutant"
+    local_id: str = Field(min_length=6, max_length=80)
 
 
 class ThemePayload(BaseModel):
@@ -240,9 +249,15 @@ class PlanExercisePayload(BaseModel):
     objectif_secondes: int | None = Field(default=None, ge=5, le=1800)
 
 
+class LocalSessionPayload(BaseModel):
+    prenom: str | None = None
+    niveau: str | None = None
+
+
 class SessionCreatePayload(BaseModel):
     user_id: int
     plan: list[PlanExercisePayload] = Field(default_factory=list)
+    local_profile: LocalSessionPayload | None = None
 
 
 class LandmarkPayload(BaseModel):
@@ -279,9 +294,11 @@ def normaliser_sexe(sexe: str) -> str:
 
 def normaliser_theme(theme: str) -> str:
     valeur = theme.strip().lower()
+    if valeur in {"ember", "ocean", "dawn", "kume"}:
+        return "kume"
     if valeur not in THEMES:
         raise HTTPException(status_code=422, detail="Theme invalide.")
-    return valeur
+    return "kume"
 
 
 def borner_pourcentage(valeur: float) -> float:
@@ -481,6 +498,14 @@ def valider_email(email: str) -> str:
     if "@" not in propre or "." not in propre.split("@", maxsplit=1)[-1]:
         raise HTTPException(status_code=422, detail="Email invalide.")
     return propre
+
+
+def email_local(local_id: str) -> str:
+    propre = local_id.strip().lower()
+    if not propre:
+        raise HTTPException(status_code=422, detail="Identifiant local invalide.")
+    digest = hashlib.sha256(propre.encode("utf-8")).hexdigest()[:16]
+    return f"local-{digest}@kume.local"
 
 
 def serialiser_profil(profil: UserProfile) -> dict[str, object]:
@@ -736,6 +761,10 @@ def construire_vue_accueil(profil: UserProfile, insights: dict[str, object]) -> 
 
 def export_url(path: Path) -> str:
     return f"/exports/{path.name}"
+
+
+def module_disponible(nom: str) -> bool:
+    return importlib.util.find_spec(nom) is not None
 
 
 def vue_utilisateur(user_id: int) -> dict[str, object]:
@@ -1005,7 +1034,25 @@ class LiveSession:
         stats = self.analyzer.obtenir_stats_exercice_actuel()
         return self._build_live_payload(analysis=analysis, stats=stats, orientation=orientation)
 
-    def finish(self) -> dict[str, object]:
+    @staticmethod
+    def _generer_pdf(chemin: Path, profil: UserProfile, resume: dict[str, object], exercices: list[dict[str, object]]) -> None:
+        try:
+            from report_generator import generer_rapport_pdf
+
+            generer_rapport_pdf(chemin, profil, resume, exercices)
+        except Exception:
+            return
+
+    @staticmethod
+    def _generer_dashboard(chemin: Path, profil: UserProfile) -> None:
+        try:
+            from dashboard import generer_dashboard
+
+            generer_dashboard(DB, profil, jours=30, sortie_png=chemin, afficher=False)
+        except Exception:
+            return
+
+    def finish(self, background_tasks: BackgroundTasks | None = None) -> dict[str, object]:
         if self.final_payload is not None:
             return self.final_payload
 
@@ -1055,20 +1102,24 @@ class LiveSession:
         }
         warnings: list[str] = []
 
-        try:
-            from report_generator import generer_rapport_pdf
-
-            generer_rapport_pdf(chemin_pdf, self.profile, resume_global, resume_exercices)
+        pdf_ok = module_disponible("fpdf")
+        if pdf_ok:
             exports["pdf"] = export_url(chemin_pdf)
-        except ModuleNotFoundError:
+            if background_tasks is not None:
+                background_tasks.add_task(self._generer_pdf, chemin_pdf, self.profile, resume_global, resume_exercices)
+            else:
+                self._generer_pdf(chemin_pdf, self.profile, resume_global, resume_exercices)
+        else:
             warnings.append("Export PDF indisponible: dependance `fpdf2` absente.")
 
-        try:
-            from dashboard import generer_dashboard
-
-            generer_dashboard(DB, self.profile, jours=30, sortie_png=chemin_dashboard, afficher=False)
+        dashboard_ok = module_disponible("matplotlib")
+        if dashboard_ok:
             exports["dashboard"] = export_url(chemin_dashboard)
-        except ModuleNotFoundError:
+            if background_tasks is not None:
+                background_tasks.add_task(self._generer_dashboard, chemin_dashboard, self.profile)
+            else:
+                self._generer_dashboard(chemin_dashboard, self.profile)
+        else:
             warnings.append("Dashboard PNG indisponible: dependance `matplotlib` absente.")
 
         self.final_payload = {
@@ -1124,7 +1175,8 @@ def bootstrap() -> dict[str, object]:
     nettoyer_sessions()
     plan_defaut = creer_plan_automatique(config.EXERCICES, "debutant")
     return {
-        "app_name": "Coach Fitness IA Web",
+        "app_name": "KUME",
+        "version": app.version,
         "themes": list(THEMES.values()),
         "exercises": [serialiser_exercice(cle, infos) for cle, infos in config.EXERCICES.items()],
         "default_plan": {
@@ -1172,6 +1224,41 @@ def login(payload: LoginPayload) -> dict[str, object]:
     DB.update_last_login(user_id)
     DB.set_last_user_id(user_id)
     return vue_utilisateur(user_id)
+
+
+@app.post("/api/auth/local")
+def login_local(payload: LocalAuthPayload) -> dict[str, object]:
+    local_id = payload.local_id.strip()
+    if not local_id:
+        raise HTTPException(status_code=422, detail="Identifiant local invalide.")
+
+    email = email_local(local_id)
+    compte = DB.get_account_by_email(email)
+    if compte is not None:
+        user_id = int(compte["user_id"])
+        profil = DB.get_user_by_id(user_id)
+        if profil is not None:
+            profil.prenom = payload.prenom.strip() or profil.prenom
+            profil.niveau = normaliser_niveau(payload.niveau)
+            DB.update_user(profil)
+        DB.update_last_login(user_id)
+        DB.set_last_user_id(user_id)
+        return vue_utilisateur(user_id)
+
+    profil = UserProfile(
+        prenom=payload.prenom.strip() or "Invite",
+        age=30,
+        taille_cm=175.0,
+        poids_kg=70.0,
+        sexe="M",
+        niveau=normaliser_niveau(payload.niveau),
+        date_creation=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    )
+    mot_de_passe_hash = hash_password(local_id)
+    profil.id = DB.create_account(profil, email, mot_de_passe_hash, theme="kume")
+    DB.update_last_login(profil.id or 0)
+    DB.set_last_user_id(profil.id or 0)
+    return vue_utilisateur(profil.id or 0)
 
 
 @app.get("/api/users/{user_id}/overview")
@@ -1241,7 +1328,41 @@ def create_auto_plan(payload: ProfilePayload) -> dict[str, object]:
 def create_session(payload: SessionCreatePayload) -> dict[str, object]:
     profil = DB.get_user_by_id(payload.user_id)
     compte = DB.get_account_by_user_id(payload.user_id)
-    if profil is None or compte is None:
+    if profil is None:
+        if payload.user_id < 0:
+            local = payload.local_profile or LocalSessionPayload()
+            prenom = (local.prenom or "Invite").strip() or "Invite"
+            try:
+                niveau = normaliser_niveau(local.niveau) if local.niveau else "debutant"
+            except HTTPException:
+                niveau = "debutant"
+            profil = UserProfile(
+                prenom=prenom,
+                age=30,
+                taille_cm=175.0,
+                poids_kg=70.0,
+                sexe="M",
+                niveau=niveau,
+                date_creation=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            )
+            local_email = f"local-{uuid.uuid4().hex}@kume.local"
+            local_password = secrets.token_hex(16)
+            profil.id = DB.create_account(
+                profil,
+                local_email,
+                hash_password(local_password),
+                theme="kume",
+            )
+            DB.update_last_login(profil.id or 0)
+            DB.set_last_user_id(profil.id or 0)
+            compte = DB.get_account_by_user_id(profil.id or 0)
+        else:
+            raise HTTPException(status_code=404, detail="Compte introuvable.")
+
+    if profil is None:
+        raise HTTPException(status_code=404, detail="Compte introuvable.")
+
+    if compte is None:
         raise HTTPException(status_code=404, detail="Compte introuvable.")
 
     plan = construire_plan(payload.plan, profil.niveau)
@@ -1300,9 +1421,9 @@ def analyze_session(session_id: str, payload: AnalyzePayload) -> dict[str, objec
 
 
 @app.post("/api/sessions/{session_id}/finish")
-def finish_session(session_id: str) -> dict[str, object]:
+def finish_session(session_id: str, background_tasks: BackgroundTasks) -> dict[str, object]:
     session = recuperer_session(session_id)
-    resultat = session.finish()
+    resultat = session.finish(background_tasks=background_tasks)
     SESSIONS.pop(session_id, None)
     return resultat
 
@@ -1442,9 +1563,16 @@ async def ws_analyze(websocket: WebSocket, session_id: str) -> None:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Coach Fitness IA - Serveur web")
-    parser.add_argument("--host", default="127.0.0.1", help="Hote d'ecoute")
-    parser.add_argument("--port", type=int, default=8000, help="Port HTTP")
+    def env_int(name: str, default: int) -> int:
+        raw = os.getenv(name, "")
+        try:
+            return int(raw)
+        except (TypeError, ValueError):
+            return default
+
+    parser = argparse.ArgumentParser(description="KUME - Serveur web")
+    parser.add_argument("--host", default=os.getenv("APP_HOST", "127.0.0.1"), help="Hote d'ecoute")
+    parser.add_argument("--port", type=int, default=env_int("APP_PORT", 8000), help="Port HTTP")
     return parser.parse_args()
 
 

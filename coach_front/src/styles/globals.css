@@ -1,0 +1,84 @@
+.kume-ui {
+  min-height: 100%;
+  color: var(--sm-text);
+}
+
+.kume-ui [class~="text-white"] {
+  color: var(--sm-text) !important;
+}
+
+.kume-ui [class~="text-white/60"],
+.kume-ui [class~="text-white/55"],
+.kume-ui [class~="text-white/50"],
+.kume-ui [class~="text-white/45"],
+.kume-ui [class~="text-white/40"] {
+  color: var(--sm-text-muted) !important;
+}
+
+.kume-ui [class~="text-white/35"],
+.kume-ui [class~="text-white/30"] {
+  color: var(--sm-text-soft) !important;
+}
+
+.kume-ui [class~="bg-white/3"],
+.kume-ui [class~="bg-white/4"],
+.kume-ui [class~="bg-white/5"],
+.kume-ui [class~="bg-white/6"],
+.kume-ui [class~="bg-white/8"] {
+  background: var(--sm-surface-soft) !important;
+}
+
+.kume-ui [class~="border-white/5"],
+.kume-ui [class~="border-white/6"],
+.kume-ui [class~="border-white/8"],
+.kume-ui [class~="border-white/10"] {
+  border-color: var(--sm-border) !important;
+}
+
+.kume-ui [class~="divide-white/5"] > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--sm-border) !important;
+}
+
+.kume-ui .auth-hero [class~="text-white"] {
+  color: #ffffff !important;
+}
+
+.kume-ui .auth-hero [class~="text-white/60"],
+.kume-ui .auth-hero [class~="text-white/55"],
+.kume-ui .auth-hero [class~="text-white/50"],
+.kume-ui .auth-hero [class~="text-white/45"],
+.kume-ui .auth-hero [class~="text-white/40"] {
+  color: rgba(255, 255, 255, 0.82) !important;
+}
+
+.kume-ui .auth-bg {
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+@media (max-width: 768px) {
+  .kume-ui .auth-bg {
+    background-position: center 10%;
+    background-size: 120%;
+  }
+}
+
+.kume-ui .live-dark-zone [class~="text-white"] {
+  color: #ffffff !important;
+}
+
+.kume-ui .live-dark-zone [class~="text-white/80"],
+.kume-ui .live-dark-zone [class~="text-white/70"],
+.kume-ui .live-dark-zone [class~="text-white/60"],
+.kume-ui .live-dark-zone [class~="text-white/50"],
+.kume-ui .live-dark-zone [class~="text-white/40"],
+.kume-ui .live-dark-zone [class~="text-white/35"],
+.kume-ui .live-dark-zone [class~="text-white/30"] {
+  color: rgba(255, 255, 255, 0.82) !important;
+}
+
+body {
+  background: var(--sm-bg, #f4f6f0);
+  font-family: "Manrope", ui-sans-serif, system-ui, sans-serif;
+}

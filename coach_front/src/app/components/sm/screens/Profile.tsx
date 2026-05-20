@@ -11,11 +11,13 @@ import {
   Lock,
   Rocket,
   Sparkles,
+  Target,
   Trophy,
   Zap,
 } from "lucide-react";
 import { useAuth } from "../../../AuthContext";
 import { updateProfile } from "../../../api";
+import { useTheme } from "../theme";
 
 const clampPercent = (value: number) => Math.max(0, Math.min(100, Number.isFinite(value) ? value : 0));
 
@@ -29,8 +31,12 @@ const bmiDetails = (value: number) => {
 
 export function ProfileScreen() {
   const { user, view, refreshOverview } = useAuth();
+  const { t } = useTheme();
   const profile = view?.profile;
   const totals = view?.insights?.totals;
+  const accountEmail = view?.account?.email ?? "-";
+  const displayEmail = accountEmail.includes("@kume.local") ? "-" : accountEmail;
+  const isLocalAccount = accountEmail.includes("@kume.local");
   const badgeMonths = view?.insights?.monthly_badges ?? [];
   const currentBadgeMonth = badgeMonths[0];
   const archivedBadgeMonths = badgeMonths.slice(1);
@@ -40,9 +46,29 @@ export function ProfileScreen() {
   const [sex, setSex] = useState<"M" | "F">("M");
   const [level, setLevel] = useState<"debutant" | "intermediaire" | "avance">("debutant");
   const [form, setForm] = useState({ prenom: "", age: "", taille_cm: "", poids_kg: "" });
+  const [imcInput, setImcInput] = useState("");
+  const [besoinInput, setBesoinInput] = useState("");
+  const [localMeta, setLocalMeta] = useState<{ imc?: string; besoin?: string } | null>(null);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("sm_local_profile");
+      if (!raw) {
+        setLocalMeta(null);
+        return;
+      }
+      const parsed = JSON.parse(raw);
+      setLocalMeta({
+        imc: parsed?.imc != null ? String(parsed.imc) : undefined,
+        besoin: parsed?.besoin_consommation != null ? String(parsed.besoin_consommation) : undefined,
+      });
+    } catch {
+      setLocalMeta(null);
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     if (!profile) return;
@@ -56,18 +82,36 @@ export function ProfileScreen() {
     setLevel(profile.niveau as "debutant" | "intermediaire" | "avance");
   }, [profile]);
 
+  useEffect(() => {
+    if (localMeta?.imc && !imcInput) setImcInput(localMeta.imc);
+    if (localMeta?.besoin && !besoinInput) setBesoinInput(localMeta.besoin);
+    if (!localMeta?.imc && profile?.imc && !imcInput) setImcInput(String(profile.imc));
+  }, [localMeta, profile, imcInput, besoinInput]);
+
   const age = Number(form.age);
   const taille = Number(form.taille_cm);
   const poids = Number(form.poids_kg);
+  const imcValue = Number(String(imcInput).replace(",", "."));
+  const hasImcInput = Number.isFinite(imcValue) && imcValue > 0;
   const bmi = poids > 0 && taille > 0 ? poids / Math.pow(taille / 100, 2) : 0;
-  const bmiInfo = bmiDetails(Number(bmi.toFixed(1)));
-  const tdee =
-    poids > 0 && taille > 0 && age > 0
-      ? Math.round((10 * poids + 6.25 * taille - 5 * age + (sex === "M" ? 5 : -161)) * (level === "avance" ? 1.55 : level === "intermediaire" ? 1.4 : 1.25))
+  const displayImcValue = hasImcInput ? imcValue : bmi > 0 ? Number(bmi.toFixed(1)) : 0;
+  const bmiInfo = bmiDetails(displayImcValue);
+  const baseHeight = taille > 0 ? taille : profile?.taille_cm ?? 170;
+  const baseAge = age > 0 ? age : profile?.age ?? 30;
+  const weightForEstimates = hasImcInput && baseHeight > 0
+    ? imcValue * Math.pow(baseHeight / 100, 2)
+    : poids;
+  const tdeeEstimate =
+    weightForEstimates > 0 && baseHeight > 0 && baseAge > 0
+      ? Math.round((10 * weightForEstimates + 6.25 * baseHeight - 5 * baseAge + (sex === "M" ? 5 : -161)) * (level === "avance" ? 1.55 : level === "intermediaire" ? 1.4 : 1.25))
       : 0;
-  const hrMax = age > 0 ? 220 - age : 0;
-  const proteinTarget = poids > 0 ? Math.round(poids * 1.6) : 0;
+  const hrMax = baseAge > 0 ? 220 - baseAge : 0;
+  const proteinTarget = weightForEstimates > 0 ? Math.round(weightForEstimates * 1.6) : 0;
   const consistency = clampPercent(totals?.consistency_pct ?? 0);
+  const besoinValue = Number(String(besoinInput).replace(",", "."));
+  const hasBesoinInput = Number.isFinite(besoinValue) && besoinValue > 0;
+  const avatarInitial = (form.prenom || "?").trim().charAt(0).toUpperCase() || "?";
+  const isLocalProfile = Boolean(localMeta) || isLocalAccount;
 
   const handleSave = async () => {
     if (!user) return;
@@ -76,7 +120,16 @@ export function ProfileScreen() {
       setError("Entre un prénom valide.");
       return;
     }
-    if (age < 10 || taille < 120 || poids < 35) {
+    if (isLocalProfile) {
+      if (!hasImcInput) {
+        setError("IMC invalide. Renseigne une valeur en chiffre.");
+        return;
+      }
+      if (!hasBesoinInput) {
+        setError("Besoin invalide. Renseigne une valeur en chiffre.");
+        return;
+      }
+    } else if (age < 10 || taille < 120 || poids < 35) {
       setError("Vérifie les valeurs saisies avant de sauvegarder.");
       return;
     }
@@ -84,15 +137,27 @@ export function ProfileScreen() {
     setLoading(true);
     setError("");
     try {
+      const ageValue = baseAge;
+      const heightValue = baseHeight;
+      const weightValue = isLocalProfile ? weightForEstimates : poids;
       await updateProfile(user.id, {
         id: user.id,
         prenom,
-        age,
-        taille_cm: taille,
-        poids_kg: poids,
+        age: ageValue,
+        taille_cm: heightValue,
+        poids_kg: weightValue,
         sexe: sex,
         niveau: level,
       });
+      if (isLocalProfile) {
+        localStorage.setItem("sm_local_profile", JSON.stringify({
+          prenom,
+          niveau: level,
+          imc: imcInput,
+          besoin_consommation: besoinInput,
+        }));
+        setLocalMeta({ imc: imcInput, besoin: besoinInput });
+      }
       await refreshOverview();
       setSaved(true);
       window.setTimeout(() => setSaved(false), 2500);
@@ -106,7 +171,7 @@ export function ProfileScreen() {
   return (
     <div className="space-y-6 p-6 lg:p-10">
       <div>
-        <h1 className="text-white" style={{ fontFamily: "Space Grotesk", fontSize: 32, fontWeight: 700 }}>
+        <h1 className="text-white" style={{ fontFamily: "Sora", fontSize: 32, fontWeight: 700 }}>
           Profil
         </h1>
         <p className="text-white/50" style={{ fontSize: 14 }}>
@@ -119,34 +184,30 @@ export function ProfileScreen() {
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
             <div
               className="flex h-24 w-24 items-center justify-center rounded-[28px] text-black"
-              style={{ background: "linear-gradient(135deg,#00D4AA,#06b89a)", fontSize: 30, fontWeight: 700, fontFamily: "Space Grotesk" }}
+              style={{ background: `linear-gradient(135deg,${t.accent},${t.accentStrong})`, color: "#ffffff", fontSize: 30, fontWeight: 700, fontFamily: "Sora" }}
             >
-              {(form.prenom || "?")
-                .split(" ")
-                .map((word) => word[0]?.toUpperCase())
-                .join("")
-                .slice(0, 2) || "??"}
+              {avatarInitial}
             </div>
             <div className="min-w-0">
               <div className="text-white" style={{ fontSize: 24, fontWeight: 700 }}>
                 {form.prenom || "Utilisateur"}
               </div>
               <div className="mt-1 text-white/50" style={{ fontSize: 13 }}>
-                {view?.account?.email ?? "-"}
+                {displayEmail}
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Pill tone="good">{level === "debutant" ? "Débutant" : level === "intermediaire" ? "Intermédiaire" : "Avancé"}</Pill>
-                <Pill tone="neutral">{sex === "M" ? "Homme" : "Femme"}</Pill>
-                <Pill tone={bmiInfo.color === "#00D4AA" ? "good" : "warn"}>IMC {bmi > 0 ? bmi.toFixed(1) : "-"}</Pill>
+                {!isLocalProfile && <Pill tone="neutral">{sex === "M" ? "Homme" : "Femme"}</Pill>}
+                <Pill tone={bmiInfo.color === "#00D4AA" ? "good" : "warn"}>IMC {displayImcValue > 0 ? displayImcValue.toFixed(1) : "-"}</Pill>
               </div>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <HeroStat icon={<CalendarDays size={16} />} label="Jours actifs" value={String(totals?.active_days_total ?? 0)} tone="#00D4AA" />
-            <HeroStat icon={<Activity size={16} />} label="Série" value={`${totals?.current_streak ?? 0} j`} tone="#FFD166" />
-            <HeroStat icon={<Trophy size={16} />} label="Sessions" value={String(totals?.sessions ?? 0)} tone="#FF6B4A" />
-            <HeroStat icon={<CheckCircle2 size={16} />} label="Régularité" value={`${Math.round(consistency)}%`} tone="#00D4AA" />
+            <HeroStat icon={<CalendarDays size={16} />} label="Jours actifs" value={String(totals?.active_days_total ?? 0)} tone={t.accentStrong} />
+            <HeroStat icon={<Activity size={16} />} label="Série" value={`${totals?.current_streak ?? 0} j`} tone={t.gold} />
+            <HeroStat icon={<Trophy size={16} />} label="Sessions" value={String(totals?.sessions ?? 0)} tone={t.secondary} />
+            <HeroStat icon={<CheckCircle2 size={16} />} label="Régularité" value={`${Math.round(consistency)}%`} tone={t.accentStrong} />
           </div>
         </div>
       </GlassCard>
@@ -154,11 +215,11 @@ export function ProfileScreen() {
       <GlassCard className="overflow-hidden p-6">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
           <div className="max-w-2xl">
-            <div className="flex items-center gap-2 text-[#FFD166]" style={{ fontSize: 12, fontWeight: 600 }}>
+            <div className="flex items-center gap-2" style={{ color: t.accentStrong, fontSize: 12, fontWeight: 700 }}>
               <Sparkles size={14} />
               Espace badges
             </div>
-            <h3 className="mt-2 text-white" style={{ fontFamily: "Space Grotesk", fontSize: 24, fontWeight: 700 }}>
+            <h3 className="mt-2 text-white" style={{ fontFamily: "Sora", fontSize: 24, fontWeight: 700 }}>
               Badges mensuels à débloquer
             </h3>
             <p className="mt-2 text-white/50" style={{ fontSize: 13, lineHeight: 1.6 }}>
@@ -264,33 +325,55 @@ export function ProfileScreen() {
 
           <div className="space-y-4">
             <Field label="Prénom" value={form.prenom} onChange={(v) => setForm((f) => ({ ...f, prenom: v }))} />
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <Field label="Âge" type="number" value={form.age} onChange={(v) => setForm((f) => ({ ...f, age: v }))} />
-              <Field label="Taille (cm)" type="number" value={form.taille_cm} onChange={(v) => setForm((f) => ({ ...f, taille_cm: v }))} />
-            </div>
-            <Field label="Poids (kg)" type="number" value={form.poids_kg} onChange={(v) => setForm((f) => ({ ...f, poids_kg: v }))} />
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Selector
-                title="Sexe"
-                value={sex}
-                options={[
-                  { key: "M", label: "Homme" },
-                  { key: "F", label: "Femme" },
-                ]}
-                onChange={(value) => setSex(value as "M" | "F")}
-              />
-              <Selector
-                title="Niveau"
-                value={level}
-                options={[
-                  { key: "debutant", label: "Débutant" },
-                  { key: "intermediaire", label: "Intermédiaire" },
-                  { key: "avance", label: "Avancé" },
-                ]}
-                onChange={(value) => setLevel(value as "debutant" | "intermediaire" | "avance")}
-              />
-            </div>
+            {isLocalProfile ? (
+              <>
+                <Selector
+                  title="Niveau"
+                  value={level}
+                  options={[
+                    { key: "debutant", label: "Débutant" },
+                    { key: "intermediaire", label: "Intermédiaire" },
+                    { key: "avance", label: "Expert" },
+                  ]}
+                  onChange={(value) => setLevel(value as "debutant" | "intermediaire" | "avance")}
+                />
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <Field label="IMC" type="number" value={imcInput} onChange={setImcInput} />
+                  <Field label="Besoin (kcal)" type="number" value={besoinInput} onChange={setBesoinInput} />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <Field label="Âge" type="number" value={form.age} onChange={(v) => setForm((f) => ({ ...f, age: v }))} />
+                  <Field label="Taille (cm)" type="number" value={form.taille_cm} onChange={(v) => setForm((f) => ({ ...f, taille_cm: v }))} />
+                </div>
+                <Field label="Poids (kg)" type="number" value={form.poids_kg} onChange={(v) => setForm((f) => ({ ...f, poids_kg: v }))} />
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Selector
+                    title="Sexe"
+                    value={sex}
+                    options={[
+                      { key: "M", label: "Homme" },
+                      { key: "F", label: "Femme" },
+                    ]}
+                    onChange={(value) => setSex(value as "M" | "F")}
+                  />
+                  <Selector
+                    title="Niveau"
+                    value={level}
+                    options={[
+                      { key: "debutant", label: "Débutant" },
+                      { key: "intermediaire", label: "Intermédiaire" },
+                      { key: "avance", label: "Expert" },
+                    ]}
+                    onChange={(value) => setLevel(value as "debutant" | "intermediaire" | "avance")}
+                  />
+                </div>
+              </>
+            )}
 
             <GlowButton className="w-full" onClick={handleSave} disabled={loading}>
               {saved ? (
@@ -321,10 +404,41 @@ export function ProfileScreen() {
             </div>
 
             <div className="space-y-4">
-              <MetricRow icon={<Activity size={18} />} label="IMC" value={bmi > 0 ? bmi.toFixed(1) : "-"} sub="Indice corporel estimé" color={bmiInfo.color} />
-              <MetricRow icon={<Flame size={18} />} label="TDEE" value={tdee > 0 ? `${tdee} kcal` : "-"} sub="Dépense quotidienne estimée" color="#FF6B4A" />
-              <MetricRow icon={<Heart size={18} />} label="FC max" value={hrMax > 0 ? `${hrMax} bpm` : "-"} sub="Fréquence cardiaque max théorique" color="#FFD166" />
-              <MetricRow icon={<CheckCircle2 size={18} />} label="Protéines" value={proteinTarget > 0 ? `${proteinTarget} g` : "-"} sub="Repère journalier simple" color="#00D4AA" />
+              <MetricRow
+                icon={<Activity size={18} />}
+                label="IMC"
+                value={displayImcValue > 0 ? displayImcValue.toFixed(1) : "-"}
+                sub={hasImcInput ? "IMC saisi à l'inscription" : "Indice corporel estimé"}
+                color={bmiInfo.color}
+              />
+              <MetricRow
+                icon={<Flame size={18} />}
+                label="TDEE"
+                value={tdeeEstimate > 0 ? `${tdeeEstimate} kcal` : "-"}
+                sub={isLocalProfile ? "Estimation basée sur l'IMC" : "Dépense quotidienne estimée"}
+                color="#FF6B4A"
+              />
+              <MetricRow
+                icon={<Target size={18} />}
+                label="Besoin"
+                value={hasBesoinInput ? `${besoinValue} kcal` : "-"}
+                sub={hasBesoinInput ? "Saisi à l'inscription" : "Besoin déclaré"}
+                color={t.gold}
+              />
+              <MetricRow
+                icon={<Heart size={18} />}
+                label="FC max"
+                value={hrMax > 0 ? `${hrMax} bpm` : "-"}
+                sub={isLocalProfile ? "Estimation théorique" : "Fréquence cardiaque max théorique"}
+                color="#FFD166"
+              />
+              <MetricRow
+                icon={<CheckCircle2 size={18} />}
+                label="Protéines"
+                value={proteinTarget > 0 ? `${proteinTarget} g` : "-"}
+                sub={isLocalProfile ? "Estimation journalière" : "Repère journalier simple"}
+                color="#00D4AA"
+              />
             </div>
           </GlassCard>
 
@@ -337,8 +451,8 @@ export function ProfileScreen() {
                 className="h-full rounded-full"
                 style={{
                   width: `${consistency}%`,
-                  background: "linear-gradient(90deg,#00D4AA,#FFD166)",
-                  boxShadow: "0 0 16px rgba(0,212,170,0.22)",
+                  background: `linear-gradient(90deg,${t.accent},${t.gold})`,
+                  boxShadow: `0 0 16px ${t.accent}38`,
                 }}
               />
             </div>
@@ -371,6 +485,8 @@ function Field({
   value: string;
   onChange: (v: string) => void;
 }) {
+  const { t } = useTheme();
+
   return (
     <div>
       <div className="mb-1.5 text-white/50" style={{ fontSize: 11 }}>
@@ -380,8 +496,8 @@ function Field({
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition-all focus:border-[#00D4AA]/60 focus:shadow-[0_0_16px_rgba(0,212,170,0.15)]"
-        style={{ fontSize: 14 }}
+        className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition-all"
+        style={{ fontSize: 14, borderColor: t.border, boxShadow: "none" }}
       />
     </div>
   );
@@ -398,6 +514,8 @@ function Selector({
   options: { key: string; label: string }[];
   onChange: (key: string) => void;
 }) {
+  const { t } = useTheme();
+
   return (
     <div>
       <div className="mb-2 text-white/50" style={{ fontSize: 11 }}>
@@ -411,7 +529,7 @@ function Selector({
               key={option.key}
               onClick={() => onChange(option.key)}
               className={`flex-1 rounded-xl border px-3 py-2.5 transition-all ${
-                active ? "border-[#00D4AA] bg-[#00D4AA]/10 text-[#00D4AA]" : "border-white/10 text-white/50"
+                active ? "border-[#4FD66C] bg-[#4FD66C]/10 text-[#1F7A37]" : "border-white/10 text-white/50"
               }`}
               style={{ fontSize: 12, fontWeight: 500 }}
             >
@@ -446,7 +564,7 @@ function MetricRow({
         <div className="text-white/50" style={{ fontSize: 11 }}>
           {label}
         </div>
-        <div className="text-white" style={{ fontFamily: "Space Grotesk", fontSize: 20, fontWeight: 700 }}>
+        <div className="text-white" style={{ fontFamily: "Sora", fontSize: 20, fontWeight: 700 }}>
           {value}
         </div>
       </div>
@@ -474,7 +592,7 @@ function HeroStat({
         {icon}
         {label}
       </div>
-      <div className="mt-3 text-white" style={{ fontFamily: "Space Grotesk", fontSize: 24, fontWeight: 700 }}>
+      <div className="mt-3 text-white" style={{ fontFamily: "Sora", fontSize: 24, fontWeight: 700 }}>
         {value}
       </div>
     </div>
@@ -487,7 +605,7 @@ function CompactCard({ label, value }: { label: string; value: string }) {
       <div className="text-white/45" style={{ fontSize: 11 }}>
         {label}
       </div>
-      <div className="mt-2 text-white" style={{ fontFamily: "Space Grotesk", fontSize: 22, fontWeight: 700 }}>
+      <div className="mt-2 text-white" style={{ fontFamily: "Sora", fontSize: 22, fontWeight: 700 }}>
         {value}
       </div>
     </div>
@@ -610,7 +728,7 @@ function UnlockRow({
           </div>
         </div>
         <div className="text-right">
-          <div className="text-white" style={{ fontFamily: "Space Grotesk", fontSize: 18, fontWeight: 700 }}>
+          <div className="text-white" style={{ fontFamily: "Sora", fontSize: 18, fontWeight: 700 }}>
             {Math.round(badge.progress_pct)}%
           </div>
           <div className="text-white/40" style={{ fontSize: 10 }}>
@@ -672,7 +790,7 @@ function ArchiveStat({ label, value }: { label: string; value: string }) {
       <div className="text-white/45" style={{ fontSize: 11 }}>
         {label}
       </div>
-      <div className="mt-2 text-white" style={{ fontFamily: "Space Grotesk", fontSize: 20, fontWeight: 700 }}>
+      <div className="mt-2 text-white" style={{ fontFamily: "Sora", fontSize: 20, fontWeight: 700 }}>
         {value}
       </div>
     </div>

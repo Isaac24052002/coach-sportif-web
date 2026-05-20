@@ -1,4 +1,4 @@
-// ── API Client — Studio Motion ──────────────────────────────────────────────
+// ── API Client — KÙMÉ ───────────────────────────────────────────────────────
 // L'API N'utilise PAS de token JWT. Même origine : FastAPI sert le build React.
 //const API_BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -94,10 +94,19 @@ export interface RegisterPayload {
 }
 export interface LoginPayload { email: string; mot_de_passe: string; }
 
+export interface LocalAuthPayload {
+  prenom: string;
+  niveau: "debutant" | "intermediaire" | "avance";
+  local_id: string;
+}
+
 export const authRegister = (p: RegisterPayload) =>
   req<APIUserView>("/api/auth/register", { method: "POST", body: JSON.stringify(p) });
 export const authLogin = (p: LoginPayload) =>
   req<APIUserView>("/api/auth/login", { method: "POST", body: JSON.stringify(p) });
+
+export const authLocal = (p: LocalAuthPayload) =>
+  req<APIUserView>("/api/auth/local", { method: "POST", body: JSON.stringify(p) });
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
 export interface BootstrapData {
@@ -149,7 +158,14 @@ export const getAutoPlan = (profile: APIUserView["profile"]) =>
 
 // ── Sessions ──────────────────────────────────────────────────────────────────
 export interface PlanExercise { cle: string; mode?: string; objectif_reps?: number; objectif_secondes?: number; }
-export interface SessionCreatePayload { user_id: number; plan: PlanExercise[]; }
+export interface LocalProfilePayload { prenom: string; niveau: "debutant" | "intermediaire" | "avance"; }
+export interface SessionCreatePayload { user_id: number; plan: PlanExercise[]; local_profile?: LocalProfilePayload; }
+
+export interface SessionCreateResponse {
+  session_id: string;
+  profile?: APIUserView["profile"];
+  account?: APIUserView["account"];
+}
 
 export interface LiveResponse {
   session_id: string; is_complete: boolean; elapsed_sec: number; average_fps: number;
@@ -173,7 +189,7 @@ export interface AnalyzePayload {
 }
 
 export const createSession = (p: SessionCreatePayload) =>
-  req<{ session_id: string } & Record<string, unknown>>("/api/sessions", { method: "POST", body: JSON.stringify(p) });
+  req<SessionCreateResponse>("/api/sessions", { method: "POST", body: JSON.stringify(p) });
 export const analyzeFrame = (sessionId: string, p: AnalyzePayload) =>
   req<LiveResponse>(`/api/sessions/${sessionId}/analyze`, { method: "POST", body: JSON.stringify(p) });
 
@@ -183,6 +199,7 @@ export interface ExerciseResult {
   duree_sec: number; calories: number; score_qualite: number; fatigue_detectee: boolean;
 }
 export interface FinishResponse {
+  pending?: boolean;
   summary: { date: string; duree_totale_sec: number; nb_exercices: number; calories_totales: number; score_global: number; note_qualite: string; objectif_pct: number; };
   exercises: ExerciseResult[];
   exports: { csv?: string; json?: string; pdf?: string; dashboard?: string };

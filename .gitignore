@@ -3,16 +3,26 @@ __pycache__/
 *.pyc
 
 # Frontend
+node_modules/
 coach_front/node_modules/
 coach_front/dist/
 coach_front/build/
+static/dist/
 
 # SQLite
 *.db-shm
 *.db-wal
+*.db
+*.sqlite
+*.sqlite3
+
+# Data / exports
+donnees/
+sorties/
 
 # Env
 .venv
+.env
 
 # Logs
 *.log

@@ -10,6 +10,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { useAuth } from "../../../AuthContext";
+import { useTheme } from "../theme";
 
 const clampScore = (value: number) => Math.max(0, Math.min(100, Number.isFinite(value) ? value : 0));
 
@@ -33,6 +34,7 @@ const formatDuration = (seconds: number) => {
 
 export function ProgressScreen() {
   const { view } = useAuth();
+  const { t } = useTheme();
   const totals = view?.insights?.totals;
   const prog = (view?.insights?.progression ?? []).map((item) => ({ ...item, score: clampScore(item.score) }));
   const quality = (view?.insights?.quality ?? []).map((item) => ({ ...item, score: clampScore(item.score) }));
@@ -62,7 +64,7 @@ export function ProgressScreen() {
     <div className="space-y-6 p-6 lg:p-10">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-white" style={{ fontFamily: "Space Grotesk", fontSize: 32, fontWeight: 700 }}>
+          <h1 className="text-white" style={{ fontFamily: "Sora", fontSize: 32, fontWeight: 700 }}>
             Progression
           </h1>
           <p className="text-white/50" style={{ fontSize: 14 }}>
@@ -81,7 +83,7 @@ export function ProgressScreen() {
       <GlassCard className="overflow-hidden p-6">
         <div className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
           <div>
-            <div className="flex items-center gap-2 text-[#FFD166]" style={{ fontSize: 12, fontWeight: 600 }}>
+            <div className="flex items-center gap-2" style={{ color: t.accentStrong, fontSize: 12, fontWeight: 700 }}>
               <TrendingUp size={14} />
               Lecture rapide
             </div>
@@ -97,8 +99,8 @@ export function ProgressScreen() {
                 className="h-full rounded-full"
                 style={{
                   width: `${consistency}%`,
-                  background: "linear-gradient(90deg,#00D4AA,#FFD166)",
-                  boxShadow: "0 0 20px rgba(0,212,170,0.25)",
+                  background: `linear-gradient(90deg, ${t.accent}, ${t.gold})`,
+                  boxShadow: `0 0 20px ${t.accent}40`,
                 }}
               />
             </div>
@@ -110,18 +112,18 @@ export function ProgressScreen() {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <MiniStat icon={<CalendarDays size={15} />} label="Jours actifs" value={`${activeDays}/14`} tone="#00D4AA" />
-            <MiniStat icon={<Trophy size={15} />} label="Meilleur score" value={`${bestScore}/100`} tone="#FFD166" />
-            <MiniStat icon={<Target size={15} />} label="Série actuelle" value={`${currentStreak} j`} tone="#FF6B4A" />
-            <MiniStat icon={<CheckCircle2 size={15} />} label="Aujourd'hui" value={todayCompleted ? "Fait" : "À lancer"} tone={todayCompleted ? "#00D4AA" : "#FFD166"} />
+            <MiniStat icon={<CalendarDays size={15} />} label="Jours actifs" value={`${activeDays}/14`} tone={t.accentStrong} />
+            <MiniStat icon={<Trophy size={15} />} label="Meilleur score" value={`${bestScore}/100`} tone={t.gold} />
+            <MiniStat icon={<Target size={15} />} label="Série actuelle" value={`${currentStreak} j`} tone={t.secondary} />
+            <MiniStat icon={<CheckCircle2 size={15} />} label="Aujourd'hui" value={todayCompleted ? "Fait" : "À lancer"} tone={todayCompleted ? t.accentStrong : t.gold} />
           </div>
         </div>
       </GlassCard>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <MetricCard icon={<Activity size={20} />} label="Sessions totales" value={sessionsTotal} trend={trendDur} />
-        <MetricCard icon={<Flame size={20} />} label="Calories 14j" value={calories14d.toLocaleString("fr")} unit="kcal" color="#FF6B4A" trend={trendCal} />
-        <MetricCard icon={<Clock size={20} />} label="Temps 14j" value={formatDuration(duration14d)} color="#FFD166" trend={trendDur} />
+        <MetricCard icon={<Flame size={20} />} label="Calories 14j" value={calories14d.toLocaleString("fr")} unit="kcal" color={t.secondary} trend={trendCal} />
+        <MetricCard icon={<Clock size={20} />} label="Temps 14j" value={formatDuration(duration14d)} color={t.gold} trend={trendDur} />
         <MetricCard icon={<Trophy size={20} />} label="Score moyen" value={avgScore} unit="/100" trend={trendScore} />
       </div>
 
@@ -140,7 +142,7 @@ export function ProgressScreen() {
               <div className="text-white/45" style={{ fontSize: 11 }}>
                 Cumul 14 jours
               </div>
-              <div className="text-white" style={{ fontFamily: "Space Grotesk", fontSize: 22, fontWeight: 700 }}>
+              <div className="text-white" style={{ fontFamily: "Sora", fontSize: 22, fontWeight: 700 }}>
                 {calories14d} kcal
               </div>
             </div>
@@ -158,9 +160,9 @@ export function ProgressScreen() {
                       style={{
                         height: `${barHeight}%`,
                         background: isActive
-                          ? "linear-gradient(180deg,#00D4AA,rgba(0,212,170,0.14))"
+                          ? `linear-gradient(180deg, ${t.accent}, rgba(79,214,108,0.14))`
                           : "rgba(255,255,255,0.08)",
-                        boxShadow: isActive ? "0 0 14px rgba(0,212,170,0.18)" : "none",
+                        boxShadow: isActive ? `0 0 14px ${t.accent}33` : "none",
                       }}
                     />
                     <div
@@ -197,7 +199,7 @@ export function ProgressScreen() {
             {quality.length > 0 ? (
               quality.map((item) => {
                 const score = Math.round(clampScore(item.score));
-                const color = score >= 75 ? "#00D4AA" : score >= 50 ? "#FFD166" : "#FF6B4A";
+                const color = score >= 75 ? t.accentStrong : score >= 50 ? t.gold : t.secondary;
                 return (
                   <div key={item.exercise}>
                     <div className="mb-1.5 flex items-center justify-between gap-3 text-white/70" style={{ fontSize: 12 }}>
@@ -285,7 +287,7 @@ export function ProgressScreen() {
                   <div className="mt-1 flex flex-wrap gap-3 text-white/45" style={{ fontSize: 11 }}>
                     <span>{formatDuration(item.duration_sec)}</span>
                     <span>{Math.round(item.calories)} kcal</span>
-                    <span style={{ color: item.score >= 80 ? "#00D4AA" : item.score >= 60 ? "#FFD166" : "#FF6B4A" }}>{item.note}</span>
+                    <span style={{ color: item.score >= 80 ? t.accentStrong : item.score >= 60 ? t.gold : t.secondary }}>{item.note}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-4 self-start sm:self-center">
@@ -321,7 +323,7 @@ function MiniStat({
         {icon}
         {label}
       </div>
-      <div className="mt-3 text-white" style={{ fontFamily: "Space Grotesk", fontSize: 24, fontWeight: 700 }}>
+      <div className="mt-3 text-white" style={{ fontFamily: "Sora", fontSize: 24, fontWeight: 700 }}>
         {value}
       </div>
     </div>

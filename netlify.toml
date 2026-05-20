@@ -1,4 +1,10 @@
 [build]
   base = "coach_front"
   command = "npm run build"
-  publish = "../static/dist"
+  publish = "dist"
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://coach-sportif-web.onrender.com/api/:splat"
+  status = 200
+  force = true

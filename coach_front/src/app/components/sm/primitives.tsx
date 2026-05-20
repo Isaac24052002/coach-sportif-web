@@ -15,19 +15,14 @@ export function GlassCard({
   ...rest
 }: React.HTMLAttributes<HTMLDivElement> & { glow?: boolean }) {
   const { t } = useTheme();
-  const isLight = t.mode === "light";
   return (
     <div
       {...rest}
       className={`relative rounded-3xl backdrop-blur-2xl ${className}`}
       style={{
-        border: isLight ? "1px solid rgba(31,20,16,0.08)" : "1px solid rgba(255,255,255,0.1)",
-        background: t.surfaceTint,
-        boxShadow: glow
-          ? `0 0 40px ${t.accent}28`
-          : isLight
-          ? "0 8px 32px rgba(31,20,16,0.08)"
-          : "0 8px 32px rgba(0,0,0,0.35)",
+        border: `1px solid ${t.border}`,
+        background: glow ? t.surfaceSoft : t.surfaceTint,
+        boxShadow: glow ? `0 18px 44px ${t.accent}22` : t.shadow,
         color: t.textPrimary,
         ...style,
       }}
@@ -95,7 +90,7 @@ export function QualityRing({
   return (
     <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} stroke={t.mode === "light" ? "rgba(31,20,16,0.08)" : "rgba(255,255,255,0.08)"} strokeWidth={stroke} fill="none" />
+        <circle cx={size / 2} cy={size / 2} r={r} stroke={t.border} strokeWidth={stroke} fill="none" />
         <motion.circle
           cx={size / 2}
           cy={size / 2}
@@ -112,7 +107,7 @@ export function QualityRing({
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span style={{ color, fontSize: size * 0.28, fontWeight: 700 }}>{Math.round(safeValue)}</span>
+        <span style={{ color, fontSize: size * 0.28, fontWeight: 700, fontFamily: "Sora" }}>{Math.round(safeValue)}</span>
         {label && <span style={{ fontSize: 10, letterSpacing: 0.5, color: t.textMuted }}>{label}</span>}
       </div>
     </div>
@@ -177,7 +172,7 @@ export function MetricCard({
       </div>
       <div className="mt-4">
         <div className="flex items-baseline gap-1.5">
-          <span style={{ color: t.textPrimary, fontSize: 28, fontWeight: 700, fontFamily: "Space Grotesk" }}>{value}</span>
+          <span style={{ color: t.textPrimary, fontSize: 28, fontWeight: 700, fontFamily: "Sora" }}>{value}</span>
           {unit && <span style={{ color: t.textMuted, fontSize: 12 }}>{unit}</span>}
         </div>
         <div style={{ color: t.textMuted, fontSize: 12, marginTop: 2 }}>{label}</div>
@@ -194,22 +189,21 @@ export function GlowButton({
   ...rest
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "primary" | "secondary" | "danger" | "ghost" }) {
   const { t } = useTheme();
-  const isLight = t.mode === "light";
   const variants: Record<string, React.CSSProperties> = {
     primary: {
-      background: `linear-gradient(135deg, ${t.accent}, ${t.accent}dd)`,
-      color: isLight ? "#fff" : "#06181A",
-      boxShadow: `0 0 28px ${t.accent}73`,
+      background: `linear-gradient(135deg, ${t.accent}, ${t.accentStrong})`,
+      color: "#ffffff",
+      boxShadow: `0 16px 32px ${t.accent}55`,
     },
     secondary: {
-      background: isLight ? "rgba(31,20,16,0.04)" : "rgba(255,255,255,0.05)",
+      background: t.surfaceStrong,
       color: t.textPrimary,
-      border: isLight ? "1px solid rgba(31,20,16,0.1)" : "1px solid rgba(255,255,255,0.1)",
+      border: `1px solid ${t.border}`,
     },
     danger: {
-      background: `linear-gradient(135deg, ${t.secondary}, ${t.secondary}dd)`,
+      background: `linear-gradient(135deg, ${t.secondary}, #db6f24)`,
       color: "#fff",
-      boxShadow: `0 0 28px ${t.secondary}73`,
+      boxShadow: `0 16px 32px ${t.secondary}48`,
     },
     ghost: { color: t.textMuted, background: "transparent" },
   };
@@ -218,7 +212,7 @@ export function GlowButton({
       {...rest}
       type={rest.type ?? "button"}
       className={`inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 transition-all active:scale-[0.98] ${className}`}
-      style={{ fontWeight: 600, fontSize: 14, ...variants[variant], ...style }}
+      style={{ fontWeight: 700, fontSize: 14, ...variants[variant], ...style }}
     >
       {children}
     </button>
@@ -237,13 +231,12 @@ export function Pill({
   onClick?: () => void;
 }) {
   const { t } = useTheme();
-  const isLight = t.mode === "light";
   const tones: Record<string, React.CSSProperties> = {
     good: { borderColor: `${t.accent}66`, background: `${t.accent}1A`, color: t.accent },
     warn: { borderColor: `${t.secondary}66`, background: `${t.secondary}1A`, color: t.secondary },
     neutral: {
-      borderColor: isLight ? "rgba(31,20,16,0.1)" : "rgba(255,255,255,0.1)",
-      background: isLight ? "rgba(31,20,16,0.04)" : "rgba(255,255,255,0.05)",
+      borderColor: t.border,
+      background: t.surfaceStrong,
       color: t.textPrimary,
     },
   };
@@ -279,8 +272,8 @@ export function Toggle({
       style={{
         width: 48,
         height: 28,
-        background: on ? t.accent : t.mode === "light" ? "rgba(31,20,16,0.15)" : "rgba(255,255,255,0.12)",
-        boxShadow: on ? `0 0 20px ${t.accent}80` : "none",
+        background: on ? `linear-gradient(90deg, ${t.accent}, ${t.accentStrong})` : t.surfaceStrong,
+        boxShadow: on ? `0 10px 24px ${t.accent}66` : "none",
       }}
     >
       <motion.span

@@ -7,6 +7,7 @@ import {
   createSession, analyzeFrame, finishSession, getExercises,
   getAutoPlan, LiveResponse, FinishResponse, ExerciseDef, PlanExercise,
 } from "../../../api";
+import { useTheme } from "../theme";
 
 const SKELETON_PAIRS = [[11,13],[13,15],[12,14],[14,16],[11,12],[23,24],[11,23],[12,24],[23,25],[25,27],[24,26],[26,28]];
 const LANDMARK_NAMES = [
@@ -19,7 +20,8 @@ const LANDMARK_NAMES = [
 const BODY_KEYS = new Set(["left_shoulder","right_shoulder","left_elbow","right_elbow","left_wrist","right_wrist","left_hip","right_hip","left_knee","right_knee","left_ankle","right_ankle"]);
 
 export function LiveScreen({ onComplete }: { onComplete: (result: FinishResponse) => void }) {
-  const { user, view } = useAuth();
+  const { t } = useTheme();
+  const { user, view, refreshOverview, promoteLocalUser } = useAuth();
   const [exercises, setExercises] = useState<ExerciseDef[]>([]);
   const [plan, setPlan] = useState<PlanExercise[]>([]);
   const [running, setRunning] = useState(false);
@@ -192,7 +194,7 @@ export function LiveScreen({ onComplete }: { onComplete: (result: FinishResponse
   // ── Squelette ─────────────────────────────────────────────────────────────
   const drawSkeleton = useCallback((ctx: CanvasRenderingContext2D, pose: any[], w: number, h: number) => {
     const variant = liveRef.current?.coach_variant ?? "warn";
-    const color = variant === "good" ? "#00D4AA" : variant === "bad" ? "#FF6B4A" : "#FFD166";
+    const color = variant === "good" ? t.accentStrong : variant === "bad" ? t.secondary : t.gold;
     ctx.save();
     ctx.lineWidth = Math.max(3, w / 320);
     ctx.lineCap = "round";
@@ -270,25 +272,51 @@ export function LiveScreen({ onComplete }: { onComplete: (result: FinishResponse
     }
 
     rafRef.current = requestAnimationFrame(processFrame);
-  }, [drawSkeleton, speak]);
+  }, [drawSkeleton, speak, t.accentStrong, t.gold, t.secondary]);
 
   // ── handleStop via ref pour éviter re-capture dans processFrame ───────────
   const handleStopRef = useRef<(auto?: boolean) => Promise<void>>(async () => {});
 
+  const buildPendingResult = useCallback((): FinishResponse => {
+    const calories = Number(liveRef.current?.live_calories ?? 0);
+    const score = Number(liveRef.current?.analysis?.taux_reussite ?? 0);
+    return {
+      pending: true,
+      summary: {
+        date: new Date().toISOString(),
+        duree_totale_sec: Math.round(elapsedRef.current),
+        nb_exercices: plan.length,
+        calories_totales: Number.isFinite(calories) ? calories : 0,
+        score_global: Number.isFinite(score) ? score : 0,
+        note_qualite: "Calcul en cours...",
+        objectif_pct: 0,
+      },
+      exercises: [],
+      exports: {},
+      warnings: [],
+      insights: {},
+    };
+  }, [plan.length]);
+
   const handleStop = useCallback(async (auto = false) => {
     if (status === "stopping") return;
     setStatus("stopping");
+    if (!auto) {
+      speak("Fin de la session.");
+    }
     cancelAnimationFrame(rafRef.current);
     stopCamera(); stopWs(); setRunning(false);
     if (sessionIdRef.current) {
+      onComplete(buildPendingResult());
       try {
         const result = await finishSession(sessionIdRef.current);
         sessionIdRef.current = null;
         onComplete(result);
+        refreshOverview();
       } catch { sessionIdRef.current = null; }
     }
     setStatus("idle"); setLive(null); setElapsedSec(0); elapsedRef.current = 0;
-  }, [status, stopCamera, stopWs, onComplete]);
+  }, [status, stopCamera, stopWs, onComplete, refreshOverview, speak, buildPendingResult]);
 
   useEffect(() => { handleStopRef.current = handleStop; }, [handleStop]);
 
@@ -318,8 +346,14 @@ export function LiveScreen({ onComplete }: { onComplete: (result: FinishResponse
     // 4. Créer la session côté API
     let sid: string;
     try {
-      const res = await createSession({ user_id: user.id, plan });
-      sid = (res as any).session_id as string;
+      const localProfile = user.id < 0
+        ? { prenom: user.prenom, niveau: user.niveau as "debutant" | "intermediaire" | "avance" }
+        : undefined;
+      const res = await createSession({ user_id: user.id, plan, local_profile: localProfile });
+      if (user.id < 0 && res.profile && res.account) {
+        promoteLocalUser(res.account, res.profile);
+      }
+      sid = res.session_id as string;
     } catch (e: any) {
       setError(e.message ?? "Impossible de créer la session");
       cancelAnimationFrame(rafRef.current);
@@ -364,19 +398,20 @@ export function LiveScreen({ onComplete }: { onComplete: (result: FinishResponse
   const coachMsg = live?.analysis?.message ?? "Place-toi au centre, garde la tête et les pieds visibles, puis lance la séance.";
   const coachVariant = live?.coach_variant ?? "warn";
   const isLive = status === "running";
+  const toggleFocus = () => setFocus((value) => !value);
 
   return (
     <div className={`${focus ? "fixed inset-0 z-50 bg-black p-0" : "p-6 lg:p-10"}`}>
       <div className={focus ? "h-full" : "space-y-5"}>
 
         {/* ── Caméra + HUD ── */}
-        <div className="relative overflow-hidden rounded-3xl"
+        <div className="live-dark-zone relative overflow-hidden rounded-3xl"
           style={{
-            border: isLive ? "1px solid rgba(0,212,170,0.4)" : "1px solid rgba(255,255,255,0.08)",
-            boxShadow: isLive ? "0 0 60px rgba(0,212,170,0.25), inset 0 0 40px rgba(0,212,170,0.08)" : "none",
+            border: isLive ? `1px solid ${t.accent}66` : `1px solid ${t.border}`,
+            boxShadow: isLive ? `0 0 60px ${t.accent}33, inset 0 0 40px ${t.accent}1a` : "none",
             aspectRatio: focus ? undefined : "16/9",
             height: focus ? "100%" : undefined,
-            background: "#060E0F",
+            background: "#133119",
           }}>
 
           {/* Video caché (source MediaPipe) */}
@@ -386,8 +421,8 @@ export function LiveScreen({ onComplete }: { onComplete: (result: FinishResponse
           {/* Message de chargement du modèle */}
           {status === "starting" && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-              <div className="h-10 w-10 animate-spin rounded-full border-4 border-white/10 border-t-[#00D4AA]" />
-              <div className="text-white/70" style={{ fontSize: 14 }}>Chargement du modèle IA…</div>
+              <div className="h-10 w-10 animate-spin rounded-full border-4 border-white/10" style={{ borderTopColor: t.accent }} />
+              <div className="text-white/70" style={{ fontSize: 14 }}>Chargement du modèle KÙMÉ…</div>
               <div className="text-white/40" style={{ fontSize: 11 }}>Première utilisation : ~10 secondes</div>
             </div>
           )}
@@ -395,9 +430,9 @@ export function LiveScreen({ onComplete }: { onComplete: (result: FinishResponse
           {/* HUD haut */}
           <div className="absolute inset-x-0 top-0 flex items-start justify-between p-4">
             <div className="flex flex-wrap gap-2">
-              <StatusChip label={isLive ? "LIVE" : "PRÊT"} color={isLive ? "#FF6B4A" : "#00D4AA"} pulsing={isLive} />
+              <StatusChip label={isLive ? "LIVE" : "PRÊT"} color={isLive ? t.secondary : t.accent} pulsing={isLive} />
               <div className="rounded-full border border-white/10 bg-black/50 px-3 py-1.5 text-white backdrop-blur-xl"
-                style={{ fontSize: 12, fontFamily: "Space Grotesk", fontWeight: 600 }}>
+                style={{ fontSize: 12, fontFamily: "Sora", fontWeight: 600 }}>
                 {mm}:{ss}
               </div>
               {live && (
@@ -415,26 +450,48 @@ export function LiveScreen({ onComplete }: { onComplete: (result: FinishResponse
                   <HudPill icon={<Wifi size={12} />} label={wsStatus === "connected" ? "WS" : "WS ✗"} tone={wsStatus === "connected" ? "good" : undefined} />
                 </>
               )}
-              <button onClick={() => setFocus(f => !f)}
-                className="rounded-full border border-white/10 bg-black/50 p-1.5 text-white/60 backdrop-blur-xl hover:text-white">
+              <button
+                onClick={toggleFocus}
+                className="hidden rounded-full border border-white/10 bg-black/50 p-1.5 text-white/60 backdrop-blur-xl hover:text-white sm:inline-flex"
+              >
                 {focus ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
               </button>
             </div>
           </div>
 
+          {!focus && (
+            <button
+              onClick={toggleFocus}
+              className="absolute right-3 top-1/2 z-30 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-black/58 text-white/80 shadow-[0_10px_24px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:hidden"
+              aria-label="Agrandir la session live"
+            >
+              <Maximize2 size={18} />
+            </button>
+          )}
+
+          {focus && (
+            <button
+              onClick={toggleFocus}
+              className="absolute right-4 top-4 z-40 flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/58 text-white/80 shadow-[0_10px_24px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:hidden"
+              aria-label="Réduire la session live"
+            >
+              <Minimize2 size={18} />
+            </button>
+          )}
+
           {/* Message coach */}
           <motion.div className="absolute bottom-4 left-4 max-w-sm rounded-2xl border border-white/10 bg-black/60 p-3 backdrop-blur-xl"
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
             <div className="flex items-start gap-2">
-              <PulseDot color={coachVariant === "good" ? "#00D4AA" : coachVariant === "bad" ? "#FF6B4A" : "#FFD166"} />
+              <PulseDot color={coachVariant === "good" ? t.accentStrong : coachVariant === "bad" ? t.secondary : t.gold} />
               <div>
-                <div className="text-[#00D4AA]" style={{ fontSize: 10, fontWeight: 600, letterSpacing: 0.5 }}>COACH IA</div>
+                <div style={{ color: t.accent, fontSize: 10, fontWeight: 700, letterSpacing: 0.5 }}>KÙMÉ</div>
                 <div className="text-white" style={{ fontSize: 13, lineHeight: 1.35 }}>{coachMsg}</div>
                 {live?.active_exercise && (
                   <div className="mt-1 text-white/50" style={{ fontSize: 11 }}>{live.active_exercise.name}</div>
                 )}
                 {live?.plan?.next_exercise && (
-                  <div className="mt-1 text-[#FFD166]" style={{ fontSize: 11 }}>
+                  <div className="mt-1" style={{ color: t.gold, fontSize: 11 }}>
                     Prochain : {live.plan.next_exercise.name} · {live.plan.next_exercise.target_label}
                   </div>
                 )}
@@ -460,13 +517,13 @@ export function LiveScreen({ onComplete }: { onComplete: (result: FinishResponse
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <Stat label="Exercice actif" value={live.active_exercise?.name ?? "-"} accent />
                   <Divider />
-                  <Stat label="Reps validées" value={String(live.analysis?.repetitions_correctes ?? 0)} color="#00D4AA" />
+                  <Stat label="Reps validées" value={String(live.analysis?.repetitions_correctes ?? 0)} color={t.accentStrong} />
                   <Divider />
-                  <Stat label="Reps invalides" value={String(live.analysis?.repetitions_invalides ?? 0)} color="#FF6B4A" />
+                  <Stat label="Reps invalides" value={String(live.analysis?.repetitions_invalides ?? 0)} color={t.secondary} />
                   <Divider />
-                  <Stat label="Angle" value={live.analysis?.angle_principal != null ? `${Math.round(live.analysis.angle_principal)}°` : "--"} color="#FFD166" />
+                  <Stat label="Angle" value={live.analysis?.angle_principal != null ? `${Math.round(live.analysis.angle_principal)}°` : "--"} color={t.gold} />
                   <Divider />
-                  <Stat label="Calories" value={`${(live.live_calories ?? 0).toFixed(1)} kcal`} color="#FF6B4A" />
+                  <Stat label="Calories" value={`${(live.live_calories ?? 0).toFixed(1)} kcal`} color={t.secondary} />
                 </div>
               </GlassCard>
             )}
@@ -542,18 +599,20 @@ export function LiveScreen({ onComplete }: { onComplete: (result: FinishResponse
 
 // ── Sous-composants locaux ────────────────────────────────────────────────────
 function HudPill({ icon, label, tone }: { icon: React.ReactNode; label: string; tone?: "good" }) {
+  const { t } = useTheme();
   return (
     <div className="flex items-center gap-1.5 rounded-full border border-white/10 bg-black/50 px-3 py-1.5 text-white/70 backdrop-blur-xl"
-      style={{ fontSize: 11, color: tone === "good" ? "#00D4AA" : undefined }}>
+      style={{ fontSize: 11, color: tone === "good" ? t.accent : undefined }}>
       {icon} {label}
     </div>
   );
 }
 function Stat({ label, value, color, accent }: { label: string; value: string; color?: string; accent?: boolean }) {
+  const { t } = useTheme();
   return (
     <div className="text-center">
       <div className="text-white/40" style={{ fontSize: 10 }}>{label}</div>
-      <div style={{ color: accent ? "#00D4AA" : (color ?? "white"), fontFamily: "Space Grotesk", fontSize: 16, fontWeight: 700 }}>{value}</div>
+      <div style={{ color: accent ? t.accentStrong : (color ?? "white"), fontFamily: "Sora", fontSize: 16, fontWeight: 700 }}>{value}</div>
     </div>
   );
 }

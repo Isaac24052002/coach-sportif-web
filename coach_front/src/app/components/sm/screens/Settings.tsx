@@ -1,49 +1,30 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { GlassCard, GlowButton } from "../primitives";
-import { CheckCircle2, Mic, ShieldAlert, Trash2, Wifi, Zap } from "lucide-react";
+import { Mic, ShieldAlert, Trash2, Zap, CheckCircle2, Palette } from "lucide-react";
 import { useAuth } from "../../../AuthContext";
-import { updateTheme } from "../../../api";
 import { useTheme } from "../theme";
 
-const THEMES = [
-  { key: "ember", label: "Ember", desc: "Studio chaud et nerveux", colors: ["#180A06", "#FF8A5C", "#FFD166"] },
-  { key: "ocean", label: "Ocean", desc: "Teal net et immersif", colors: ["#060E0F", "#00D4AA", "#5FA8D3"] },
-  { key: "dawn", label: "Dawn", desc: "Lueur sportive dorée", colors: ["#0E0A06", "#FFD166", "#FF6B4A"] },
-] as const;
-
 export function SettingsScreen({ onLogout }: { onLogout: () => void }) {
-  const { user, view, bootData, deleteAccount, refreshOverview } = useAuth();
-  const { setId } = useTheme();
+  const { user, view, bootData, deleteAccount } = useAuth();
+  const { t } = useTheme();
+  const accountEmail = view?.account?.email ?? "";
+  const isLocalAccount = accountEmail.includes("@kume.local");
+  const lastLogin = view?.account?.last_login ?? "";
+  const lastSession = view?.insights?.recent_sessions?.[0]?.date ?? "";
+  const formatDateTime = (value: string) => {
+    if (!value) return "-";
+    const safe = value.includes("T") ? value : value.replace(" ", "T");
+    const dt = new Date(safe);
+    if (Number.isNaN(dt.getTime())) return "-";
+    return dt.toLocaleString("fr-FR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  };
+  const lastLoginLabel = lastLogin ? formatDateTime(lastLogin) : "-";
+  const lastSessionLabel = lastSession ? formatDateTime(lastSession) : "Aucune";
   const [voiceOn, setVoiceOn] = useState(true);
   const [focusOn, setFocusOn] = useState(false);
-  const [theme, setTheme] = useState(user?.theme ?? "ember");
-  const [saved, setSaved] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
-
-  useEffect(() => {
-    setTheme(user?.theme ?? "ember");
-  }, [user?.theme]);
-
-  const handleThemeChange = async (nextTheme: string) => {
-    setTheme(nextTheme);
-    if (nextTheme === "ember" || nextTheme === "ocean" || nextTheme === "dawn") {
-      setId(nextTheme);
-    }
-    if (!user) return;
-    try {
-      await updateTheme(user.id, nextTheme);
-      await refreshOverview();
-      setSaved(true);
-      window.setTimeout(() => setSaved(false), 2200);
-    } catch {
-      setTheme(user.theme);
-      if (user.theme === "ember" || user.theme === "ocean" || user.theme === "dawn") {
-        setId(user.theme);
-      }
-    }
-  };
 
   const handleDeleteAccount = async () => {
     setDeleteError("");
@@ -60,114 +41,74 @@ export function SettingsScreen({ onLogout }: { onLogout: () => void }) {
   return (
     <div className="space-y-6 p-6 lg:p-10">
       <div>
-        <h1 className="text-white" style={{ fontFamily: "Space Grotesk", fontSize: 32, fontWeight: 700 }}>
+        <h1 className="text-white" style={{ fontFamily: "Sora", fontSize: 32, fontWeight: 700 }}>
           Paramètres
         </h1>
         <p className="text-white/50" style={{ fontSize: 14 }}>
-          Préférences, rendu visuel et sécurité du compte
+          Préférences, ambiance KÙMÉ et sécurité du compte
         </p>
       </div>
 
-      <GlassCard className="overflow-hidden p-6">
+      <GlassCard className="overflow-hidden p-6" glow>
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <div className="flex items-center gap-2 text-[#FFD166]" style={{ fontSize: 12, fontWeight: 600 }}>
-              <Zap size={14} />
-              Personnalisation rapide
+            <div className="flex items-center gap-2" style={{ color: t.accentStrong, fontSize: 12, fontWeight: 700 }}>
+              <Palette size={14} />
+              Thème unifié
             </div>
-            <h3 className="mt-2 text-white" style={{ fontSize: 20, fontWeight: 700 }}>
-              Choisis l'ambiance qui te suit partout
+            <h3 className="mt-2 text-white" style={{ fontFamily: "Sora", fontSize: 20, fontWeight: 700 }}>
+              Le système utilise désormais le style KÙMÉ
             </h3>
-            <p className="mt-2 max-w-xl text-white/50" style={{ fontSize: 13, lineHeight: 1.5 }}>
-              Le thème appliqué ici est repris sur le tableau de bord, les statistiques et les vues de séance.
+            <p className="mt-2 text-white/50" style={{ fontSize: 13, lineHeight: 1.6, maxWidth: 620 }}>
+              Les trois anciens thèmes ont été retirés. Toute l'interface reprend maintenant une palette claire,
+              verte et douce inspirée du visuel de référence.
             </p>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-white/4 px-4 py-3">
-            <div className="text-white/45" style={{ fontSize: 11 }}>
-              Thème actif
+          <div className="rounded-[28px] border px-4 py-4" style={{ borderColor: t.border, background: t.surfaceStrong, minWidth: 220 }}>
+            <div className="mb-4 flex gap-2">
+              {t.preview.map((color) => (
+                <span key={color} className="h-8 w-8 rounded-full" style={{ background: color, boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.45)" }} />
+              ))}
             </div>
-            <div className="text-white" style={{ fontSize: 16, fontWeight: 600 }}>
-              {THEMES.find((item) => item.key === theme)?.label ?? "Ember"}
-            </div>
+            <div style={{ color: t.textMuted, fontSize: 11 }}>Thème actif</div>
+            <div style={{ color: t.textPrimary, fontSize: 18, fontWeight: 700, fontFamily: "Sora" }}>KÙMÉ</div>
           </div>
-        </div>
-
-        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {THEMES.map((item) => {
-            const active = theme === item.key;
-            return (
-              <button
-                key={item.key}
-                onClick={() => handleThemeChange(item.key)}
-                className="group relative overflow-hidden rounded-3xl border p-4 text-left transition-all"
-                style={{
-                  borderColor: active ? "#00D4AA" : "rgba(255,255,255,0.08)",
-                  background: active ? "rgba(0,212,170,0.07)" : "rgba(255,255,255,0.03)",
-                  boxShadow: active ? "0 0 28px rgba(0,212,170,0.18)" : "none",
-                }}
-              >
-                <div className="mb-4 flex gap-1.5">
-                  {item.colors.map((c) => (
-                    <div key={c} className="h-6 w-6 rounded-full" style={{ background: c }} />
-                  ))}
-                </div>
-                <div className="text-white" style={{ fontSize: 14, fontWeight: 600 }}>
-                  {item.label}
-                </div>
-                <div className="text-white/50" style={{ fontSize: 11 }}>
-                  {item.desc}
-                </div>
-                {active && (
-                  <div className="absolute right-3 top-3 text-[#00D4AA]">
-                    <CheckCircle2 size={16} />
-                  </div>
-                )}
-              </button>
-            );
-          })}
         </div>
       </GlassCard>
 
       <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
         <GlassCard className="p-6">
-          <h3 className="mb-5 text-white" style={{ fontSize: 16, fontWeight: 600 }}>
+          <h3 className="mb-5 text-white" style={{ fontSize: 16, fontWeight: 700 }}>
             Préférences séance
           </h3>
           <div className="space-y-3">
             <ToggleRow
               icon={<Mic size={18} />}
               label="Feedback vocal"
-              desc="Le coach peut continuer à parler pendant la séance."
+              desc="KÙMÉ peut continuer à parler pendant la séance."
               on={voiceOn}
-              onToggle={() => setVoiceOn((v) => !v)}
+              onToggle={() => setVoiceOn((value) => !value)}
             />
             <ToggleRow
               icon={<Zap size={18} />}
               label="Mode focus"
               desc="Prépare une vue plus épurée pendant les sessions live."
               on={focusOn}
-              onToggle={() => setFocusOn((v) => !v)}
+              onToggle={() => setFocusOn((value) => !value)}
             />
           </div>
         </GlassCard>
 
         <GlassCard className="p-6">
-          <h3 className="mb-5 text-white" style={{ fontSize: 16, fontWeight: 600 }}>
+          <h3 className="mb-5 text-white" style={{ fontSize: 16, fontWeight: 700 }}>
             Système
           </h3>
           <div className="space-y-3">
-            <InfoRow label="Version API" value={bootData?.version ?? "3.0.0"} />
-            <InfoRow
-              label="WebSocket"
-              value={
-                <span className="flex items-center gap-1">
-                  <Wifi size={12} /> Opérationnel
-                </span>
-              }
-              color="#00D4AA"
-            />
-            <InfoRow label="Utilisateur ID" value={user ? `#${user.id}` : "-"} />
-            <InfoRow label="Niveau" value={user?.niveau === "avance" ? "Avancé" : user?.niveau === "intermediaire" ? "Intermédiaire" : "Débutant"} />
+            <InfoRow label="Version" value={bootData?.version ?? "3.0.0"} />
+            <InfoRow label="Mode" value={isLocalAccount ? "Local (appareil)" : "Compte"} />
+            <InfoRow label="Dernière connexion" value={lastLoginLabel} />
+            <InfoRow label="Dernière séance" value={lastSessionLabel} />
+            <InfoRow label="Niveau" value={user?.niveau === "avance" || user?.niveau === "expert" ? "Expert" : user?.niveau === "intermediaire" ? "Intermédiaire" : "Débutant"} />
             <InfoRow label="Sessions totales" value={String(view?.insights?.totals?.sessions ?? 0)} />
             <InfoRow label="Jours actifs" value={String(view?.insights?.totals?.active_days_total ?? 0)} />
             <InfoRow label="Série actuelle" value={`${view?.insights?.totals?.current_streak ?? 0} jour(s)`} />
@@ -178,11 +119,11 @@ export function SettingsScreen({ onLogout }: { onLogout: () => void }) {
       <GlassCard className="p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <div className="flex items-center gap-2 text-[#FF6B4A]" style={{ fontSize: 12, fontWeight: 600 }}>
+            <div className="flex items-center gap-2" style={{ color: t.secondary, fontSize: 12, fontWeight: 700 }}>
               <ShieldAlert size={14} />
               Zone sensible
             </div>
-            <h3 className="mt-2 text-white" style={{ fontSize: 18, fontWeight: 700 }}>
+            <h3 className="mt-2 text-white" style={{ fontFamily: "Sora", fontSize: 18, fontWeight: 700 }}>
               Supprimer mon compte
             </h3>
             <p className="mt-2 max-w-xl text-white/50" style={{ fontSize: 13, lineHeight: 1.5 }}>
@@ -198,7 +139,7 @@ export function SettingsScreen({ onLogout }: { onLogout: () => void }) {
 
         {confirmDelete && (
           <div className="mt-5 rounded-3xl border border-red-500/20 bg-red-500/8 p-5">
-            <div className="text-white" style={{ fontSize: 15, fontWeight: 600 }}>
+            <div className="text-white" style={{ fontSize: 15, fontWeight: 700 }}>
               Es-tu sûr de vouloir supprimer ton compte ?
             </div>
             <div className="mt-2 text-white/55" style={{ fontSize: 13 }}>
@@ -228,14 +169,12 @@ export function SettingsScreen({ onLogout }: { onLogout: () => void }) {
         )}
       </GlassCard>
 
-      {saved && (
-        <div
-          className="fixed bottom-6 right-6 flex items-center gap-2 rounded-2xl border border-[#00D4AA]/30 bg-[#00D4AA]/10 px-4 py-3 text-[#00D4AA]"
-          style={{ fontSize: 13 }}
-        >
-          <CheckCircle2 size={16} /> Thème sauvegardé
-        </div>
-      )}
+      <div
+        className="inline-flex items-center gap-2 rounded-2xl border px-4 py-3"
+        style={{ borderColor: `${t.accent}44`, background: `${t.accent}14`, color: t.accentStrong, fontSize: 13 }}
+      >
+        <CheckCircle2 size={16} /> KÙMÉ est bien activé sur l'ensemble du site.
+      </div>
     </div>
   );
 }
@@ -253,20 +192,22 @@ function ToggleRow({
   on: boolean;
   onToggle: () => void;
 }) {
+  const { t } = useTheme();
+
   return (
     <div className="flex items-center justify-between rounded-2xl border border-white/5 bg-white/3 px-4 py-3.5">
       <div className="flex items-center gap-3">
         <div
           className="flex h-9 w-9 items-center justify-center rounded-xl"
           style={{
-            background: on ? "rgba(0,212,170,0.12)" : "rgba(255,255,255,0.05)",
-            color: on ? "#00D4AA" : "rgba(255,255,255,0.5)",
+            background: on ? `${t.accent}22` : t.surfaceStrong,
+            color: on ? t.accentStrong : t.textMuted,
           }}
         >
           {icon}
         </div>
         <div>
-          <div className="text-white" style={{ fontSize: 14, fontWeight: 500 }}>
+          <div className="text-white" style={{ fontSize: 14, fontWeight: 600 }}>
             {label}
           </div>
           <div className="text-white/40" style={{ fontSize: 11 }}>
@@ -278,8 +219,8 @@ function ToggleRow({
         onClick={onToggle}
         className="relative h-7 w-12 rounded-full transition-all"
         style={{
-          background: on ? "linear-gradient(90deg,#00D4AA,#06b89a)" : "rgba(255,255,255,0.1)",
-          boxShadow: on ? "0 0 16px rgba(0,212,170,0.35)" : "none",
+          background: on ? `linear-gradient(90deg, ${t.accent}, ${t.accentStrong})` : t.surfaceStrong,
+          boxShadow: on ? `0 10px 18px ${t.accent}55` : "none",
         }}
       >
         <div className="absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-sm transition-all" style={{ left: on ? "calc(100% - 26px)" : 2 }} />
@@ -289,12 +230,14 @@ function ToggleRow({
 }
 
 function InfoRow({ label, value, color }: { label: string; value: React.ReactNode; color?: string }) {
+  const { t } = useTheme();
+
   return (
     <div className="flex items-center justify-between gap-3 rounded-xl border border-white/5 bg-white/3 px-4 py-3">
       <span className="text-white/50" style={{ fontSize: 13 }}>
         {label}
       </span>
-      <span style={{ fontSize: 13, fontWeight: 500, color: color ?? "rgba(255,255,255,0.8)", textAlign: "right" }}>{value}</span>
+      <span style={{ fontSize: 13, fontWeight: 600, color: color ?? t.textPrimary, textAlign: "right" }}>{value}</span>
     </div>
   );
 }

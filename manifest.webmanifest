@@ -1,16 +1,16 @@
 {
-  "name": "Coach Fitness IA Web",
-  "short_name": "CoachFit",
-  "description": "Application web responsive de coaching fitness avec camera et analyse de posture.",
+  "name": "KÙMÉ",
+  "short_name": "KÙMÉ",
+  "description": "Application web responsive KÙMÉ pour le coaching fitness avec caméra et analyse de posture.",
   "display": "standalone",
-  "background_color": "#0b1116",
-  "theme_color": "#121a23",
+  "background_color": "#f4f6f0",
+  "theme_color": "#32c95d",
   "start_url": "/",
   "icons": [
     {
-      "src": "/static/brand.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/static/img/logo.png",
+      "sizes": "842x596",
+      "type": "image/png",
       "purpose": "any"
     }
   ]

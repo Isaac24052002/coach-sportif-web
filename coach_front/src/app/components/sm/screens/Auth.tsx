@@ -2,89 +2,66 @@ import { useState } from "react";
 import { GlassCard, GlowButton } from "../primitives";
 import {
   AlertCircle,
-  BadgeCheck,
-  Dumbbell,
   Eye,
-  Lock,
-  Mail,
-  Ruler,
   ScanLine,
   Sparkles,
   User,
-  Weight,
   Wifi,
 } from "lucide-react";
 import { useAuth } from "../../../AuthContext";
-import { RegisterPayload } from "../../../api";
+import { useTheme } from "../theme";
 
 const AUTH_BG_URL = "/static/img/coach.png";
+const BRAND_LOGO_SRC = "/static/img/logo.png";
 
 export function AuthScreen({ onAuth }: { onAuth: () => void }) {
-  const [tab, setTab] = useState<"login" | "register">("login");
+  const { t } = useTheme();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [confirmPwd, setConfirmPwd] = useState("");
-  const { login, register } = useAuth();
+  const { startLocalSession } = useAuth();
 
-  const [loginEmail, setLoginEmail] = useState("");
-  const [loginPwd, setLoginPwd] = useState("");
-  const [reg, setReg] = useState({
-    prenom: "",
-    email: "",
-    mot_de_passe: "",
-    age: "24",
-    taille_cm: "175",
-    poids_kg: "70",
-    sexe: "M" as "M" | "F",
-    niveau: "debutant" as RegisterPayload["niveau"],
-    theme: "ember",
-  });
+  const [prenom, setPrenom] = useState("");
+  const [niveau, setNiveau] = useState<"debutant" | "intermediaire" | "avance">("debutant");
+  const [imc, setImc] = useState("");
+  const [besoinConsommation, setBesoinConsommation] = useState("");
 
-  const passwordStrength =
-    reg.mot_de_passe.length >= 10 ? "Robuste" : reg.mot_de_passe.length >= 6 ? "Correct" : "Trop court";
-  const passwordsMatch = confirmPwd.length > 0 && reg.mot_de_passe === confirmPwd;
+  const imcValue = Number(imc.replace(",", "."));
+  const besoinValue = Number(besoinConsommation.replace(",", "."));
+  const canSubmit =
+    prenom.trim().length >= 2 &&
+    Number.isFinite(imcValue) && imcValue > 0 &&
+    Number.isFinite(besoinValue) && besoinValue > 0;
 
-  const handleLogin = async () => {
+  const featureCards = [
+    { icon: <Eye size={18} />, title: "Vision KÙMÉ", desc: "Détection 17 keypoints" },
+    { icon: <ScanLine size={18} />, title: "10 exercices", desc: "Bibliothèque experte" },
+    { icon: <Wifi size={18} />, title: "Temps réel", desc: "WebSocket < 50ms" },
+  ];
+
+  const statPoints = [
+    "● Coach visuel guidé",
+    "● Score qualité /100",
+    "● Historique par jour",
+    "● Exports PDF",
+  ];
+
+  const handleValidate = async () => {
+    if (!canSubmit) {
+      setError("Merci de renseigner un IMC et un besoin valides (en chiffres).");
+      return;
+    }
     setError("");
     setLoading(true);
     try {
-      await login(loginEmail, loginPwd);
-      onAuth();
-    } catch (e: any) {
-      setError(e.message ?? "Identifiants incorrects");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRegister = async () => {
-    setError("");
-    if (reg.prenom.trim().length < 2) {
-      setError("Entre un prénom valide.");
-      return;
-    }
-    if (reg.mot_de_passe.length < 6) {
-      setError("Le mot de passe doit contenir au moins 6 caractères.");
-      return;
-    }
-    if (reg.mot_de_passe !== confirmPwd) {
-      setError("Les deux mots de passe ne correspondent pas.");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await register({
-        ...reg,
-        prenom: reg.prenom.trim(),
-        email: reg.email.trim(),
-        age: Number(reg.age),
-        taille_cm: Number(reg.taille_cm),
-        poids_kg: Number(reg.poids_kg),
+      await startLocalSession({
+        prenom: prenom.trim(),
+        niveau,
+        imc: imc.trim(),
+        besoin_consommation: besoinConsommation.trim(),
       });
       onAuth();
     } catch (e: any) {
-      setError(e.message ?? "Erreur inscription");
+      setError(e?.message ?? "Impossible de demarrer la session.");
     } finally {
       setLoading(false);
     }
@@ -94,38 +71,32 @@ export function AuthScreen({ onAuth }: { onAuth: () => void }) {
     <div className="relative min-h-screen w-full overflow-hidden">
       <div className="absolute inset-0">
         <div
-          className="absolute inset-0"
+          className="absolute inset-0 auth-bg"
           style={{
             backgroundImage: `url(${AUTH_BG_URL})`,
-            backgroundPosition: "center",
-            backgroundSize: "cover",
-            backgroundRepeat: "no-repeat",
           }}
         />
         <div
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(60% 50% at 20% 30%, rgba(0,212,170,0.12), transparent 70%), radial-gradient(50% 40% at 80% 70%, rgba(255,107,74,0.10), transparent 70%), linear-gradient(180deg, rgba(6,14,15,0.78), rgba(11,26,28,0.90))",
+              "radial-gradient(60% 50% at 20% 30%, rgba(79,214,108,0.18), transparent 70%), radial-gradient(50% 40% at 80% 70%, rgba(255,255,255,0.10), transparent 70%), linear-gradient(180deg, rgba(31,122,55,0.62), rgba(20,55,27,0.78))",
           }}
         />
       </div>
 
       <div className="relative z-10 grid min-h-screen lg:grid-cols-2">
-        <div className="flex flex-col justify-between p-8 lg:p-14">
+        <div className="auth-hero flex flex-col justify-between p-8 lg:p-14">
           <div className="flex items-center gap-3">
-            <div
-              className="flex h-11 w-11 items-center justify-center rounded-2xl"
-              style={{ background: "linear-gradient(135deg,#00D4AA,#06b89a)", boxShadow: "0 0 24px rgba(0,212,170,0.45)" }}
-            >
-              <Dumbbell size={22} color="#06181A" strokeWidth={2.5} />
-            </div>
+            <img
+              src={BRAND_LOGO_SRC}
+              alt="HuuFit"
+              className="object-contain"
+              style={{ width: 132, height: 50, background: "transparent", boxShadow: "0 12px 24px rgba(0,0,0,0.18)" }}
+            />
             <div>
-              <div className="text-white" style={{ fontFamily: "Space Grotesk", fontWeight: 700, fontSize: 18 }}>
-                Studio Motion
-              </div>
-              <div className="text-white/40" style={{ fontSize: 11 }}>
-                Coach Fitness IA
+              <div className="text-white" style={{ fontFamily: "Sora", fontWeight: 700, fontSize: 18 }}>
+                KÙMÉ
               </div>
             </div>
           </div>
@@ -133,37 +104,33 @@ export function AuthScreen({ onAuth }: { onAuth: () => void }) {
           <div className="my-12 max-w-xl">
             <h1
               className="text-white"
-              style={{ fontFamily: "Space Grotesk", fontSize: 52, fontWeight: 700, lineHeight: 1.05, letterSpacing: -1 }}
+              style={{ fontFamily: "Sora", fontSize: 52, fontWeight: 700, lineHeight: 1.05, letterSpacing: -1 }}
             >
-              Ton coach IA
+              Ton coach fitness personnel.
               <br />
               <span
                 style={{
-                  background: "linear-gradient(90deg,#00D4AA,#FFD166)",
+                  background: "linear-gradient(90deg,#CFF8D7,#7EF09B)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                 }}
               >
-                qui voit
+                KÙMÉ
               </span>{" "}
-              ce que les autres ne voient pas.
+              te guide à chaque séance.
             </h1>
             <p className="mt-5 text-white/55" style={{ fontSize: 16, maxWidth: 500 }}>
               Analyse posturale en temps réel, comptage intelligent des reps et recommandations visuelles pour garder
               une progression propre.
             </p>
-            <div className="mt-10 grid grid-cols-1 gap-3 sm:grid-cols-3">
-              {[
-                { icon: <Eye size={18} />, title: "Vision IA", desc: "Détection 17 keypoints" },
-                { icon: <ScanLine size={18} />, title: "10 exercices", desc: "Bibliothèque experte" },
-                { icon: <Wifi size={18} />, title: "Temps réel", desc: "WebSocket < 50ms" },
-              ].map((f) => (
+            <div className="mt-10 hidden grid-cols-1 gap-3 sm:grid-cols-3 lg:grid">
+              {featureCards.map((f) => (
                 <GlassCard key={f.title} className="p-4">
-                  <div className="text-[#00D4AA]">{f.icon}</div>
-                  <div className="mt-3 text-white" style={{ fontSize: 14, fontWeight: 600 }}>
+                  <div style={{ color: "#4FD66C" }}>{f.icon}</div>
+                  <div className="mt-3" style={{ color: "#0b0b0b", fontSize: 14, fontWeight: 600 }}>
                     {f.title}
                   </div>
-                  <div className="text-white/50" style={{ fontSize: 11 }}>
+                  <div style={{ color: "#0b0b0b", opacity: 0.7, fontSize: 11 }}>
                     {f.desc}
                   </div>
                 </GlassCard>
@@ -171,46 +138,25 @@ export function AuthScreen({ onAuth }: { onAuth: () => void }) {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-x-6 gap-y-2 text-white/40" style={{ fontSize: 11 }}>
-            <span>● Coach visuel guidé</span>
-            <span>● Score qualité /100</span>
-            <span>● Historique par jour</span>
-            <span>● Exports PDF</span>
+          <div className="hidden flex-wrap gap-x-6 gap-y-2 text-white/40 lg:flex" style={{ fontSize: 11 }}>
+            {statPoints.map((item) => (
+              <span key={item}>{item}</span>
+            ))}
           </div>
         </div>
 
-        <div className="flex items-center justify-center p-6 lg:p-12">
-          <GlassCard glow className={`w-full ${tab === "register" ? "max-w-2xl" : "max-w-md"} p-8`} style={{ borderRadius: 32 } as any}>
-            <div className="mb-6 flex rounded-2xl bg-white/5 p-1">
-              {(["login", "register"] as const).map((t) => (
-                <button
-                  key={t}
-                  onClick={() => {
-                    setTab(t);
-                    setError("");
-                  }}
-                  className={`flex-1 rounded-xl py-2.5 transition-all ${
-                    tab === t ? "bg-[#00D4AA] text-black shadow-[0_0_20px_rgba(0,212,170,0.4)]" : "text-white/60"
-                  }`}
-                  style={{ fontSize: 13, fontWeight: 600 }}
-                >
-                  {t === "login" ? "Connexion" : "Inscription"}
-                </button>
-              ))}
-            </div>
-
+        <div className="flex flex-col items-center justify-center gap-6 p-6 lg:p-12">
+          <GlassCard glow className="w-full max-w-lg p-8" style={{ borderRadius: 32 } as any}>
             <div className="mb-5">
-              <div className="flex items-center gap-2 text-[#FFD166]" style={{ fontSize: 12, fontWeight: 600 }}>
+              <div className="flex items-center gap-2" style={{ color: t.accentStrong, fontSize: 12, fontWeight: 700 }}>
                 <Sparkles size={14} />
-                {tab === "login" ? "Retour au studio" : "Créer ton espace personnel"}
+                Merci de renseigner
               </div>
-              <h2 className="mt-2 text-white" style={{ fontFamily: "Space Grotesk", fontSize: 28, fontWeight: 700 }}>
-                {tab === "login" ? "Reprends ta progression" : "Prépare un profil plus précis"}
+              <h2 className="mt-2 text-white" style={{ fontFamily: "Sora", fontSize: 28, fontWeight: 700 }}>
+                Tes informations de départ
               </h2>
               <p className="mt-2 text-white/50" style={{ fontSize: 13, lineHeight: 1.5 }}>
-                {tab === "login"
-                  ? "Connecte-toi pour retrouver tes séances, tes scores et ton tableau de progression."
-                  : "Un profil complet permet d'affiner les objectifs, le TDEE et les retours affichés dans le suivi."}
+                Renseigne ton prénom, ton niveau et ton besoin de consommation pour accéder à l'espace.
               </p>
             </div>
 
@@ -223,137 +169,68 @@ export function AuthScreen({ onAuth }: { onAuth: () => void }) {
               </div>
             )}
 
-            {tab === "login" ? (
-              <div className="space-y-4">
-                <FI icon={<Mail size={16} />} label="Email" type="email" value={loginEmail} onChange={setLoginEmail} autoComplete="email" />
-                <FI
-                  icon={<Lock size={16} />}
-                  label="Mot de passe"
-                  type="password"
-                  value={loginPwd}
-                  onChange={setLoginPwd}
-                  autoComplete="current-password"
-                />
-                <GlowButton className="w-full" onClick={handleLogin} disabled={loading}>
-                  {loading ? "Connexion…" : "Se connecter"}
-                </GlowButton>
-              </div>
-            ) : (
-              <div className="space-y-5">
-                <div className="rounded-3xl border border-[#00D4AA]/15 bg-[#00D4AA]/8 p-4">
-                  <div className="flex items-center gap-2 text-[#00D4AA]" style={{ fontSize: 12, fontWeight: 600 }}>
-                    <BadgeCheck size={14} />
-                    Profil guidé
-                  </div>
-                  <div className="mt-2 text-white" style={{ fontSize: 14, fontWeight: 600 }}>
-                    Renseigne tes infos une seule fois pour obtenir un suivi plus juste.
-                  </div>
-                  <div className="mt-1 text-white/45" style={{ fontSize: 11 }}>
-                    Le mot de passe doit être confirmé avant la création du compte.
-                  </div>
-                </div>
-
-                <div>
-                  <div className="mb-3 text-white/45" style={{ fontSize: 11, letterSpacing: 0.6 }}>
-                    IDENTITÉ
-                  </div>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <FI
-                      icon={<User size={16} />}
-                      label="Prénom"
-                      value={reg.prenom}
-                      onChange={(v) => setReg((r) => ({ ...r, prenom: v }))}
-                      autoComplete="given-name"
-                    />
-                    <FI
-                      icon={<Mail size={16} />}
-                      label="Email"
-                      type="email"
-                      value={reg.email}
-                      onChange={(v) => setReg((r) => ({ ...r, email: v }))}
-                      autoComplete="email"
-                    />
-                    <FI
-                      icon={<Lock size={16} />}
-                      label="Mot de passe"
-                      type="password"
-                      value={reg.mot_de_passe}
-                      onChange={(v) => setReg((r) => ({ ...r, mot_de_passe: v }))}
-                      autoComplete="new-password"
-                      help={reg.mot_de_passe ? `Niveau: ${passwordStrength}` : "Minimum 6 caractères"}
-                    />
-                    <FI
-                      icon={<Lock size={16} />}
-                      label="Confirmer le mot de passe"
-                      type="password"
-                      value={confirmPwd}
-                      onChange={setConfirmPwd}
-                      autoComplete="new-password"
-                      help={confirmPwd ? (passwordsMatch ? "Les mots de passe correspondent" : "Les mots de passe sont différents") : "Retape le même mot de passe"}
-                      helpTone={confirmPwd ? (passwordsMatch ? "success" : "danger") : "neutral"}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <div className="mb-3 text-white/45" style={{ fontSize: 11, letterSpacing: 0.6 }}>
-                    PROFIL SPORTIF
-                  </div>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                    <FI label="Âge" type="number" value={reg.age} onChange={(v) => setReg((r) => ({ ...r, age: v }))} inputMode="numeric" />
-                    <FI
-                      icon={<Ruler size={16} />}
-                      label="Taille (cm)"
-                      type="number"
-                      value={reg.taille_cm}
-                      onChange={(v) => setReg((r) => ({ ...r, taille_cm: v }))}
-                      inputMode="decimal"
-                    />
-                    <FI
-                      icon={<Weight size={16} />}
-                      label="Poids (kg)"
-                      type="number"
-                      value={reg.poids_kg}
-                      onChange={(v) => setReg((r) => ({ ...r, poids_kg: v }))}
-                      inputMode="decimal"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <SelectorGroup
-                    title="Sexe"
-                    items={[
-                      { key: "M", label: "Homme" },
-                      { key: "F", label: "Femme" },
-                    ]}
-                    value={reg.sexe}
-                    onChange={(value) => setReg((r) => ({ ...r, sexe: value as "M" | "F" }))}
-                  />
-                  <SelectorGroup
-                    title="Niveau"
-                    items={[
-                      { key: "debutant", label: "Débutant" },
-                      { key: "intermediaire", label: "Intermédiaire" },
-                      { key: "avance", label: "Avancé" },
-                    ]}
-                    value={reg.niveau}
-                    onChange={(value) =>
-                      setReg((r) => ({ ...r, niveau: value as RegisterPayload["niveau"] }))
-                    }
-                  />
-                </div>
-
-                <GlowButton className="w-full" onClick={handleRegister} disabled={loading || !passwordsMatch}>
-                  {loading ? "Création…" : "Créer mon espace"}
-                </GlowButton>
-              </div>
-            )}
+            <div className="space-y-4">
+              <FI
+                icon={<User size={16} />}
+                label="Prénom"
+                value={prenom}
+                onChange={setPrenom}
+                autoComplete="given-name"
+              />
+              <SelectorGroup
+                title="Niveau"
+                items={[
+                  { key: "debutant", label: "Débutant" },
+                  { key: "intermediaire", label: "Intermédiaire" },
+                  { key: "avance", label: "Expert" },
+                ]}
+                value={niveau}
+                onChange={(value) => setNiveau(value as "debutant" | "intermediaire" | "avance")}
+              />
+              <FI
+                label="IMC"
+                value={imc}
+                onChange={setImc}
+                type="number"
+                inputMode="decimal"
+              />
+              <FI
+                label="Besoin de consommation(kcal)"
+                value={besoinConsommation}
+                onChange={setBesoinConsommation}
+                type="number"
+                inputMode="decimal"
+              />
+              <GlowButton className="w-full" onClick={handleValidate} disabled={loading}>
+                Valider
+              </GlowButton>
+            </div>
 
             <p className="mt-6 text-center text-white/35" style={{ fontSize: 11 }}>
               En continuant, tu acceptes nos conditions d'utilisation.
             </p>
           </GlassCard>
+
+          <div className="w-full max-w-lg lg:hidden">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {featureCards.map((f) => (
+                <GlassCard key={f.title} className="p-4">
+                  <div style={{ color: "#4FD66C" }}>{f.icon}</div>
+                  <div className="mt-3" style={{ color: "#0b0b0b", fontSize: 14, fontWeight: 600 }}>
+                    {f.title}
+                  </div>
+                  <div style={{ color: "#0b0b0b", opacity: 0.7, fontSize: 11 }}>
+                    {f.desc}
+                  </div>
+                </GlassCard>
+              ))}
+            </div>
+            <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-white/40" style={{ fontSize: 11 }}>
+              {statPoints.map((item) => (
+                <span key={item}>{item}</span>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -381,18 +258,19 @@ function FI({
   help?: string;
   helpTone?: "neutral" | "success" | "danger";
 }) {
+  const { t } = useTheme();
   const [focus, setFocus] = useState(false);
   const float = focus || value.length > 0;
   const helpColor =
-    helpTone === "success" ? "#00D4AA" : helpTone === "danger" ? "#FF6B4A" : "rgba(255,255,255,0.35)";
+    helpTone === "success" ? t.accentStrong : helpTone === "danger" ? t.secondary : t.textSoft;
 
   return (
     <div>
       <div
         className="relative rounded-2xl border bg-white/5 transition-all"
         style={{
-          borderColor: focus ? "rgba(0,212,170,0.6)" : "rgba(255,255,255,0.08)",
-          boxShadow: focus ? "0 0 24px rgba(0,212,170,0.2)" : "none",
+          borderColor: focus ? "rgba(79,214,108,0.45)" : "rgba(38,89,49,0.10)",
+          boxShadow: focus ? "0 14px 26px rgba(79,214,108,0.14)" : "none",
         }}
       >
         {icon && <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40">{icon}</div>}
@@ -403,7 +281,7 @@ function FI({
             top: float ? 8 : "50%",
             transform: float ? "none" : "translateY(-50%)",
             fontSize: float ? 10 : 13,
-            color: float ? "#00D4AA" : "rgba(255,255,255,0.45)",
+            color: float ? t.accentStrong : t.textMuted,
           }}
         >
           {label}
@@ -453,7 +331,7 @@ function SelectorGroup({
               key={item.key}
               onClick={() => onChange(item.key)}
               className={`flex-1 rounded-xl border px-3 py-2.5 transition-all ${
-                active ? "border-[#00D4AA] bg-[#00D4AA]/10 text-[#00D4AA]" : "border-white/10 text-white/50"
+                active ? "border-[#4FD66C] bg-[#4FD66C]/10 text-[#1F7A37]" : "border-white/10 text-white/50"
               }`}
               style={{ fontSize: 12, fontWeight: 500 }}
             >

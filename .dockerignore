@@ -1,0 +1,12 @@
+.git
+.venv
+__pycache__/
+*.pyc
+node_modules/
+coach_front/node_modules/
+coach_front/dist/
+static/dist/
+donnees/
+sorties/
+.env
+.DS_Store

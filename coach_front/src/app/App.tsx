@@ -21,20 +21,15 @@ function Shell() {
   const [showSummary, setShowSummary] = useState(false);
   const [summaryResult, setSummaryResult] = useState<FinishResponse | null>(null);
 
-  const isLight = t.mode === "light";
-  const rootClass = isLight ? "" : "dark";
-
   useEffect(() => {
-    if (user?.theme === "ember" || user?.theme === "ocean" || user?.theme === "dawn") {
-      setId(user.theme);
-    }
+    setId("kume");
   }, [setId, user?.theme]);
 
   if (!authed) {
     return (
       <div
-        className={`${rootClass} min-h-screen w-full`}
-        style={{ fontFamily: "Inter, ui-sans-serif", background: t.bg, color: t.textPrimary }}
+        className="kume-ui min-h-screen w-full"
+        style={{ fontFamily: "Manrope, ui-sans-serif", background: t.shellBg, color: t.textPrimary }}
       >
         <AuthScreen onAuth={() => {}} />
       </div>
@@ -53,10 +48,10 @@ function Shell() {
 
   return (
     <div
-      className={`${rootClass} relative min-h-screen w-full`}
+      className="kume-ui relative min-h-screen w-full"
       style={{
-        fontFamily: "Inter, ui-sans-serif",
-        background: `${t.bgRadial}, ${t.bg}`,
+        fontFamily: "Manrope, ui-sans-serif",
+        background: `${t.bgRadial}, ${t.shellBg}`,
         color: t.textPrimary,
       }}
     >
