@@ -111,7 +111,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const startLocalSession = async (profile: { prenom: string; niveau: "debutant" | "intermediaire" | "avance"; imc: string; besoin_consommation: string; }) => {
     const localId = ensureLocalId();
     const v = await authLocal({ prenom: profile.prenom, niveau: profile.niveau, local_id: localId });
-    localStorage.setItem("sm_local_profile", JSON.stringify(profile));
+    localStorage.setItem("sm_local_profile", JSON.stringify({
+      ...profile,
+      user_id: v.account.user_id,
+    }));
     applyView(v);
   };
   

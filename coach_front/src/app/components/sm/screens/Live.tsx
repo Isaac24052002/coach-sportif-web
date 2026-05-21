@@ -48,6 +48,7 @@ export function LiveScreen({ onComplete }: { onComplete: (result: FinishResponse
   const voiceRef = useRef(true);
   const startTimeRef = useRef(0);
   const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
+  const planStorageKey = user ? `sm_plan_${user.id}` : "sm_plan";
 
   // Sync refs
   useEffect(() => { voiceRef.current = voice; }, [voice]);
@@ -64,8 +65,43 @@ export function LiveScreen({ onComplete }: { onComplete: (result: FinishResponse
 
   // Charger les exercices au montage + auto-sélectionner le premier
   useEffect(() => {
+    let canceled = false;
     getExercises().then(list => {
+      if (canceled) return;
       setExercises(list);
+      const stored = (() => {
+        try {
+          const raw = localStorage.getItem(planStorageKey);
+          if (!raw) return null;
+          const parsed = JSON.parse(raw);
+          if (!Array.isArray(parsed)) return null;
+          const resolved = parsed
+            .map((item) => {
+              if (typeof item === "string") {
+                const ex = list.find((e) => e.key === item);
+                if (!ex) return null;
+                return {
+                  cle: ex.key,
+                  mode: ex.mode,
+                  objectif_reps: ex.mode === "reps" ? ex.default_target : undefined,
+                  objectif_secondes: ex.mode === "time" ? ex.default_target : undefined,
+                } as PlanExercise;
+              }
+              if (item && typeof item.cle === "string") {
+                return item as PlanExercise;
+              }
+              return null;
+            })
+            .filter((item): item is PlanExercise => Boolean(item));
+          return resolved.length > 0 ? resolved : null;
+        } catch {
+          return null;
+        }
+      })();
+      if (stored) {
+        setPlan(stored);
+        return;
+      }
       // Pré-sélectionner les 3 premiers exercices pour que le bouton soit actif d'emblée
       if (list.length > 0) {
         setPlan(list.slice(0, 3).map(e => ({
@@ -75,7 +111,16 @@ export function LiveScreen({ onComplete }: { onComplete: (result: FinishResponse
         })));
       }
     }).catch(() => {});
-  }, []);
+    return () => { canceled = true; };
+  }, [planStorageKey]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(planStorageKey, JSON.stringify(plan));
+    } catch {
+      // Ignore storage errors (private mode, quota, etc.)
+    }
+  }, [plan, planStorageKey]);
 
   // Timer basé sur les refs (pas de re-render sur chaque tick)
   useEffect(() => {
@@ -401,7 +446,7 @@ export function LiveScreen({ onComplete }: { onComplete: (result: FinishResponse
   const toggleFocus = () => setFocus((value) => !value);
 
   return (
-    <div className={`${focus ? "fixed inset-0 z-50 bg-black p-0" : "p-6 lg:p-10"}`}>
+    <div className={`${focus ? "fixed inset-0 z-50 bg-black p-0" : "px-6 pb-6 pt-4 lg:px-10 lg:pb-10 lg:pt-6"}`}>
       <div className={focus ? "h-full" : "space-y-5"}>
 
         {/* ── Caméra + HUD ── */}
@@ -545,15 +590,21 @@ export function LiveScreen({ onComplete }: { onComplete: (result: FinishResponse
                     return (
                       <button key={e.key} onClick={() => !running && toggleExercise(e.key)} disabled={running}
                         className="rounded-xl px-3 py-1.5 border transition-all disabled:opacity-40"
-                        style={{ fontSize: 12, borderColor: inPlan ? "#00D4AA" : "rgba(255,255,255,0.1)", background: inPlan ? "rgba(0,212,170,0.1)" : "rgba(255,255,255,0.03)", color: inPlan ? "#00D4AA" : "rgba(255,255,255,0.6)" }}>
+                        style={{
+                          fontSize: 12,
+                          borderColor: inPlan ? t.accent : t.border,
+                          background: inPlan ? t.accentDim : t.surfaceStrong,
+                          color: "#0b0b0b",
+                          boxShadow: inPlan ? `0 10px 16px ${t.accent}26` : "none",
+                        }}>
                         {inPlan ? "✓ " : ""}{e.name}
-                        <span className="ml-1 text-white/30" style={{ fontSize: 10 }}>({e.default_target} {e.target_label})</span>
+                        <span className="ml-1" style={{ fontSize: 10, color: t.textMuted }}>({e.default_target} {e.target_label})</span>
                       </button>
                     );
                   })}
                 </div>
                 {plan.length > 0 && (
-                  <div className="text-white/40" style={{ fontSize: 11 }}>
+                  <div style={{ fontSize: 11, color: t.textMuted }}>
                     {plan.length} exercice{plan.length > 1 ? "s" : ""} sélectionné{plan.length > 1 ? "s" : ""}
                   </div>
                 )}
@@ -564,7 +615,11 @@ export function LiveScreen({ onComplete }: { onComplete: (result: FinishResponse
 
                 <button onClick={() => { setVoice(v => !v); voiceRef.current = !voiceRef.current; }}
                   className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-white/70 hover:text-white transition-all"
-                  style={{ fontSize: 12, borderColor: voice ? "rgba(0,212,170,0.4)" : "rgba(255,255,255,0.1)", color: voice ? "#00D4AA" : "rgba(255,255,255,0.5)" }}>
+                  style={{
+                    fontSize: 12,
+                    borderColor: voice ? `${t.accent}66` : t.border,
+                    color: voice ? t.accentStrong : t.textMuted,
+                  }}>
                   {voice ? <Mic size={14} /> : <MicOff size={14} />}
                   Voix {voice ? "activée" : "désactivée"}
                 </button>

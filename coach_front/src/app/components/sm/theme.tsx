@@ -35,7 +35,7 @@ export const themes: Record<
     bgRadial:
       "radial-gradient(90% 120% at 15% 0%, rgba(79, 214, 108, 0.18), transparent 55%), radial-gradient(70% 70% at 100% 12%, rgba(46, 122, 63, 0.10), transparent 52%)",
     shellBg:
-      "linear-gradient(180deg, #32C95D 0px, #32C95D 108px, #F4F6F0 108px, #F4F6F0 100%)",
+      "linear-gradient(180deg, #32C95D 0px, #32C95D 180px, #F4F6F0 180px, #F4F6F0 100%)",
     accent: "#4FD66C",
     accentStrong: "#1F7A37",
     accentDim: "rgba(79, 214, 108, 0.16)",

@@ -195,7 +195,7 @@ export function AuthScreen({ onAuth }: { onAuth: () => void }) {
                 inputMode="decimal"
               />
               <FI
-                label="Besoin de consommation(kcal)"
+                label="Besoin de consommation (kcal)"
                 value={besoinConsommation}
                 onChange={setBesoinConsommation}
                 type="number"

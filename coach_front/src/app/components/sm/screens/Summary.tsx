@@ -23,15 +23,15 @@ export function SummarySheet({ result, onClose }: { result: FinishResponse; onCl
         <GlassCard className="p-8">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <div className="text-white/50" style={{ fontSize: 11 }}>Résumé final</div>
-              <h2 className="text-white" style={{ fontFamily: "Sora", fontSize: 24, fontWeight: 700 }}>Séance terminée 💪</h2>
+              <div style={{ fontSize: 11, color: t.textMuted }}>Résumé final</div>
+              <h2 style={{ fontFamily: "Sora", fontSize: "clamp(18px, 3.4vw, 24px)", fontWeight: 700, color: t.textPrimary }}>Séance terminée 💪</h2>
               {pending && (
-                <div className="mt-1 text-white/40" style={{ fontSize: 12 }}>
+                <div className="mt-1" style={{ fontSize: 12, color: t.textMuted }}>
                   Calcul en cours, quelques secondes...
                 </div>
               )}
             </div>
-            <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/5 text-white/60 hover:bg-white/10" style={{ border: `1px solid ${t.border}` }}>
+            <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/5 hover:bg-white/10" style={{ border: `1px solid ${t.border}`, color: t.textMuted }}>
               <X size={18} />
             </button>
           </div>
@@ -40,19 +40,19 @@ export function SummarySheet({ result, onClose }: { result: FinishResponse; onCl
           <div className="mb-8 flex items-center gap-6">
             <QualityRing value={score} size={120} label="Score" />
             <div>
-              <div className="text-white/50" style={{ fontSize: 13 }}>Score global</div>
+              <div style={{ fontSize: 13, color: t.textMuted }}>Score global</div>
               <div style={{ fontFamily: "Sora", fontSize: 36, fontWeight: 700, color: noteColor }}>{note}</div>
-              <div className="text-white/40" style={{ fontSize: 13 }}>{score} / 100 points</div>
+              <div style={{ fontSize: 13, color: t.textSoft }}>{score} / 100 points</div>
               {s.objectif_pct > 0 && (
-                <div className="mt-1 text-white/40" style={{ fontSize: 11 }}>
-                  Objectif calorique : {s.objectif_pct.toFixed(1)}% du TDEE
+                <div className="mt-1" style={{ fontSize: 11, color: t.textSoft }}>
+                  Objectif calorique : {s.objectif_pct.toFixed(1)}% du besoin de consommation
                 </div>
               )}
             </div>
           </div>
 
           {/* Métriques */}
-          <div className="mb-6 grid grid-cols-3 gap-3">
+          <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
             <MetricBox label="Durée" value={pending ? "--" : `${dureMin} min`} color={t.gold} />
             <MetricBox label="Calories" value={pending ? "--" : `${cal} kcal`} color={t.secondary} />
             <MetricBox label="Exercices" value={pending ? "--" : String(result.exercises.length)} color={t.accentStrong} />
@@ -61,7 +61,7 @@ export function SummarySheet({ result, onClose }: { result: FinishResponse; onCl
           {/* Détail exercices */}
           {!pending && result.exercises.length > 0 && (
             <div className="mb-6 space-y-2">
-              <div className="text-white/50 mb-3" style={{ fontSize: 12 }}>Détail par exercice</div>
+              <div className="mb-3" style={{ fontSize: 12, color: t.textMuted }}>Détail par exercice</div>
               {result.exercises.map((ex, i) => {
                 const q = Math.round(ex.score_qualite);
                 const color = q >= 80 ? t.accentStrong : q >= 60 ? t.gold : t.secondary;
@@ -69,8 +69,8 @@ export function SummarySheet({ result, onClose }: { result: FinishResponse; onCl
                   <div key={i} className="flex items-center gap-4 rounded-xl border border-white/5 bg-white/3 px-4 py-3">
                     <QualityRing value={q} size={44} stroke={4} />
                     <div className="flex-1">
-                      <div className="text-white" style={{ fontSize: 14, fontWeight: 600 }}>{ex.nom_exercice}</div>
-                      <div className="text-white/40" style={{ fontSize: 11 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: t.textPrimary }}>{ex.nom_exercice}</div>
+                      <div style={{ fontSize: 11, color: t.textMuted }}>
                         {ex.reps_validees} validées · {ex.reps_realisees - ex.reps_validees} invalides
                         {ex.fatigue_detectee && " · Fatigue détectée"}
                       </div>
@@ -86,7 +86,7 @@ export function SummarySheet({ result, onClose }: { result: FinishResponse; onCl
           {!pending && result.warnings.length > 0 && (
             <div className="mb-6 rounded-2xl border border-yellow-500/20 bg-yellow-500/8 px-4 py-3">
               <div className="text-yellow-400 mb-2" style={{ fontSize: 12, fontWeight: 600 }}>Notes</div>
-              {result.warnings.map((w, i) => <div key={i} className="text-white/60" style={{ fontSize: 12 }}>· {w}</div>)}
+              {result.warnings.map((w, i) => <div key={i} style={{ fontSize: 12, color: t.textMuted }}>· {w}</div>)}
             </div>
           )}
 
@@ -111,9 +111,10 @@ export function SummarySheet({ result, onClose }: { result: FinishResponse; onCl
 }
 
 function MetricBox({ label, value, color }: { label: string; value: string; color: string }) {
+  const { t } = useTheme();
   return (
     <div className="rounded-2xl border border-white/5 bg-white/3 p-4 text-center">
-      <div className="text-white/50 mb-1" style={{ fontSize: 11 }}>{label}</div>
+      <div className="mb-1" style={{ fontSize: 11, color: t.textMuted }}>{label}</div>
       <div style={{ color, fontFamily: "Sora", fontSize: 22, fontWeight: 700 }}>{value}</div>
     </div>
   );

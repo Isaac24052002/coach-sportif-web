@@ -39,12 +39,12 @@ export function SettingsScreen({ onLogout }: { onLogout: () => void }) {
   };
 
   return (
-    <div className="space-y-6 p-6 lg:p-10">
+    <div className="space-y-6 px-6 pb-6 pt-3 lg:px-10 lg:pb-10 lg:pt-5">
       <div>
-        <h1 className="text-white" style={{ fontFamily: "Sora", fontSize: 32, fontWeight: 700 }}>
+        <h1 style={{ fontFamily: "Sora", fontSize: "clamp(24px, 4.2vw, 32px)", fontWeight: 700, color: t.textPrimary }}>
           Paramètres
         </h1>
-        <p className="text-white/50" style={{ fontSize: 14 }}>
+        <p style={{ fontSize: 14, color: t.textPrimary }}>
           Préférences, ambiance KÙMÉ et sécurité du compte
         </p>
       </div>
@@ -56,10 +56,10 @@ export function SettingsScreen({ onLogout }: { onLogout: () => void }) {
               <Palette size={14} />
               Thème unifié
             </div>
-            <h3 className="mt-2 text-white" style={{ fontFamily: "Sora", fontSize: 20, fontWeight: 700 }}>
+            <h3 style={{ fontFamily: "Sora", fontSize: "clamp(18px, 3.4vw, 20px)", fontWeight: 700, color: t.textPrimary }}>
               Le système utilise désormais le style KÙMÉ
             </h3>
-            <p className="mt-2 text-white/50" style={{ fontSize: 13, lineHeight: 1.6, maxWidth: 620 }}>
+            <p className="mt-2" style={{ fontSize: 13, lineHeight: 1.6, maxWidth: 620, color: t.textMuted }}>
               Les trois anciens thèmes ont été retirés. Toute l'interface reprend maintenant une palette claire,
               verte et douce inspirée du visuel de référence.
             </p>
@@ -78,7 +78,7 @@ export function SettingsScreen({ onLogout }: { onLogout: () => void }) {
 
       <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
         <GlassCard className="p-6">
-          <h3 className="mb-5 text-white" style={{ fontSize: 16, fontWeight: 700 }}>
+          <h3 style={{ fontSize: 16, fontWeight: 700, color: t.textPrimary }}>
             Préférences séance
           </h3>
           <div className="space-y-3">
@@ -100,7 +100,7 @@ export function SettingsScreen({ onLogout }: { onLogout: () => void }) {
         </GlassCard>
 
         <GlassCard className="p-6">
-          <h3 className="mb-5 text-white" style={{ fontSize: 16, fontWeight: 700 }}>
+          <h3 style={{ fontSize: 16, fontWeight: 700, color: t.textPrimary }}>
             Système
           </h3>
           <div className="space-y-3">
@@ -123,10 +123,10 @@ export function SettingsScreen({ onLogout }: { onLogout: () => void }) {
               <ShieldAlert size={14} />
               Zone sensible
             </div>
-            <h3 className="mt-2 text-white" style={{ fontFamily: "Sora", fontSize: 18, fontWeight: 700 }}>
+            <h3 style={{ fontFamily: "Sora", fontSize: 18, fontWeight: 700, color: t.textPrimary }}>
               Supprimer mon compte
             </h3>
-            <p className="mt-2 max-w-xl text-white/50" style={{ fontSize: 13, lineHeight: 1.5 }}>
+            <p className="mt-2 max-w-xl" style={{ fontSize: 13, lineHeight: 1.5, color: t.textMuted }}>
               Cette action efface le profil, l'historique des séances et les statistiques associées.
             </p>
           </div>
@@ -139,11 +139,11 @@ export function SettingsScreen({ onLogout }: { onLogout: () => void }) {
 
         {confirmDelete && (
           <div className="mt-5 rounded-3xl border border-red-500/20 bg-red-500/8 p-5">
-            <div className="text-white" style={{ fontSize: 15, fontWeight: 700 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: t.textPrimary }}>
               Es-tu sûr de vouloir supprimer ton compte ?
             </div>
-            <div className="mt-2 text-white/55" style={{ fontSize: 13 }}>
-              Choisis clairement entre <span className="text-white">oui</span> ou <span className="text-white">non</span>.
+            <div className="mt-2" style={{ fontSize: 13, color: t.textMuted }}>
+              Choisis clairement entre <span style={{ color: t.textPrimary }}>oui</span> ou <span style={{ color: t.textPrimary }}>non</span>.
             </div>
             {deleteError && (
               <div className="mt-4 rounded-2xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-red-400" style={{ fontSize: 13 }}>
@@ -207,10 +207,10 @@ function ToggleRow({
           {icon}
         </div>
         <div>
-          <div className="text-white" style={{ fontSize: 14, fontWeight: 600 }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: t.textPrimary }}>
             {label}
           </div>
-          <div className="text-white/40" style={{ fontSize: 11 }}>
+          <div style={{ fontSize: 11, color: t.textMuted }}>
             {desc}
           </div>
         </div>
@@ -234,7 +234,7 @@ function InfoRow({ label, value, color }: { label: string; value: React.ReactNod
 
   return (
     <div className="flex items-center justify-between gap-3 rounded-xl border border-white/5 bg-white/3 px-4 py-3">
-      <span className="text-white/50" style={{ fontSize: 13 }}>
+      <span style={{ fontSize: 13, color: t.textMuted }}>
         {label}
       </span>
       <span style={{ fontSize: 13, fontWeight: 600, color: color ?? t.textPrimary, textAlign: "right" }}>{value}</span>

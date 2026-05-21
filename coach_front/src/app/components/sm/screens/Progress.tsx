@@ -61,13 +61,13 @@ export function ProgressScreen() {
   const weaknesses = [...quality].filter((item) => item.score < 70).sort((a, b) => a.score - b.score).slice(0, 4);
 
   return (
-    <div className="space-y-6 p-6 lg:p-10">
+    <div className="space-y-6 px-6 pb-6 pt-3 lg:px-10 lg:pb-10 lg:pt-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-white" style={{ fontFamily: "Sora", fontSize: 32, fontWeight: 700 }}>
+          <h1 style={{ fontFamily: "Sora", fontSize: "clamp(24px, 4.2vw, 32px)", fontWeight: 700, color: t.textPrimary }}>
             Progression
           </h1>
-          <p className="text-white/50" style={{ fontSize: 14 }}>
+          <p style={{ fontSize: 14, color: t.textPrimary }}>
             14 derniers jours, calculés jour par jour sans doubler une même date.
           </p>
         </div>
@@ -87,10 +87,10 @@ export function ProgressScreen() {
               <TrendingUp size={14} />
               Lecture rapide
             </div>
-            <h3 className="mt-2 text-white" style={{ fontSize: 22, fontWeight: 700 }}>
+            <h3 className="mt-2" style={{ fontSize: "clamp(18px, 3.4vw, 22px)", fontWeight: 700, color: t.textPrimary }}>
               Régularité en hausse
             </h3>
-            <p className="mt-2 max-w-xl text-white/50" style={{ fontSize: 13, lineHeight: 1.5 }}>
+            <p className="mt-2 max-w-xl" style={{ fontSize: 13, lineHeight: 1.5, color: t.textMuted }}>
               Tu as enregistré {sessions14d} séance(s) sur les 14 derniers jours, avec un meilleur score de {bestScore}/100
               et une constance estimée à {Math.round(consistency)}%.
             </p>
@@ -104,7 +104,7 @@ export function ProgressScreen() {
                 }}
               />
             </div>
-            <div className="mt-2 flex items-center justify-between text-white/35" style={{ fontSize: 11 }}>
+            <div className="mt-2 flex items-center justify-between" style={{ fontSize: 11, color: t.textSoft }}>
               <span>0%</span>
               <span>Couverture des 14 jours</span>
               <span>100%</span>
@@ -131,18 +131,18 @@ export function ProgressScreen() {
         <GlassCard className="p-6">
           <div className="mb-5 flex items-center justify-between">
             <div>
-              <h3 className="text-white" style={{ fontSize: 16, fontWeight: 600 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 600, color: t.textPrimary }}>
                 Charge quotidienne
               </h3>
-              <div className="text-white/45" style={{ fontSize: 11 }}>
+              <div style={{ fontSize: 11, color: t.textMuted }}>
                 Historique jour par jour sur 14 jours
               </div>
             </div>
             <div className="text-right">
-              <div className="text-white/45" style={{ fontSize: 11 }}>
+              <div style={{ fontSize: 11, color: t.textMuted }}>
                 Cumul 14 jours
               </div>
-              <div className="text-white" style={{ fontFamily: "Sora", fontSize: 22, fontWeight: 700 }}>
+              <div style={{ fontFamily: "Sora", fontSize: 22, fontWeight: 700, color: t.textPrimary }}>
                 {calories14d} kcal
               </div>
             </div>
@@ -174,7 +174,7 @@ export function ProgressScreen() {
                       {Math.round(item.score)}/100
                     </div>
                   </div>
-                  <div className="text-white/35" style={{ fontSize: 10 }}>
+                  <div style={{ fontSize: 10, color: t.textSoft }}>
                     {formatShortDate(item.date)}
                   </div>
                 </div>
@@ -186,10 +186,10 @@ export function ProgressScreen() {
         <GlassCard className="p-6">
           <div className="mb-5 flex items-center justify-between">
             <div>
-              <h3 className="text-white" style={{ fontSize: 16, fontWeight: 600 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 600, color: t.textPrimary }}>
                 Qualité par exercice
               </h3>
-              <div className="text-white/45" style={{ fontSize: 11 }}>
+              <div style={{ fontSize: 11, color: t.textMuted }}>
                 Scores bornés et recalculés sur 100
               </div>
             </div>
@@ -202,7 +202,7 @@ export function ProgressScreen() {
                 const color = score >= 75 ? t.accentStrong : score >= 50 ? t.gold : t.secondary;
                 return (
                   <div key={item.exercise}>
-                    <div className="mb-1.5 flex items-center justify-between gap-3 text-white/70" style={{ fontSize: 12 }}>
+                    <div className="mb-1.5 flex items-center justify-between gap-3" style={{ fontSize: 12, color: t.textMuted }}>
                       <span className="truncate">{item.exercise}</span>
                       <span style={{ color, fontWeight: 700 }}>{score}%</span>
                     </div>
@@ -213,7 +213,7 @@ export function ProgressScreen() {
                 );
               })
             ) : (
-              <div className="rounded-2xl border border-white/6 bg-white/3 px-4 py-5 text-white/40" style={{ fontSize: 13 }}>
+              <div className="rounded-2xl border border-white/6 bg-white/3 px-4 py-5" style={{ fontSize: 13, color: t.textMuted }}>
                 Fais des séances pour voir ta qualité par exercice.
               </div>
             )}
@@ -223,7 +223,7 @@ export function ProgressScreen() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <GlassCard className="p-6">
-          <h3 className="mb-4 text-white" style={{ fontSize: 16, fontWeight: 600 }}>
+          <h3 className="mb-4" style={{ fontSize: 16, fontWeight: 600, color: t.textPrimary }}>
             Ce que tu maîtrises
           </h3>
           <div className="flex flex-wrap gap-2">
@@ -234,7 +234,7 @@ export function ProgressScreen() {
                 </Pill>
               ))
             ) : (
-              <span className="text-white/40" style={{ fontSize: 13 }}>
+              <span style={{ fontSize: 13, color: t.textMuted }}>
                 Aucun point fort lisible pour l'instant.
               </span>
             )}
@@ -242,7 +242,7 @@ export function ProgressScreen() {
         </GlassCard>
 
         <GlassCard className="p-6">
-          <h3 className="mb-4 text-white" style={{ fontSize: 16, fontWeight: 600 }}>
+          <h3 className="mb-4" style={{ fontSize: 16, fontWeight: 600, color: t.textPrimary }}>
             Points à renforcer
           </h3>
           <div className="flex flex-wrap gap-2">
@@ -253,7 +253,7 @@ export function ProgressScreen() {
                 </Pill>
               ))
             ) : (
-              <span className="text-white/40" style={{ fontSize: 13 }}>
+              <span style={{ fontSize: 13, color: t.textMuted }}>
                 Pas assez de données pour établir des axes d'amélioration.
               </span>
             )}
@@ -264,10 +264,10 @@ export function ProgressScreen() {
       <GlassCard className="p-6">
         <div className="mb-5 flex items-center justify-between">
           <div>
-            <h3 className="text-white" style={{ fontSize: 16, fontWeight: 600 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: t.textPrimary }}>
               Séances récentes
             </h3>
-            <div className="text-white/45" style={{ fontSize: 11 }}>
+            <div style={{ fontSize: 11, color: t.textMuted }}>
               Les dernières séances enregistrées
             </div>
           </div>
@@ -281,10 +281,10 @@ export function ProgressScreen() {
                 className="flex flex-col gap-4 rounded-3xl border border-white/6 bg-white/3 px-4 py-4 sm:flex-row sm:items-center"
               >
                 <div className="min-w-0 flex-1">
-                  <div className="text-white" style={{ fontSize: 14, fontWeight: 600 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: t.textPrimary }}>
                     {formatSessionDate(item.date)}
                   </div>
-                  <div className="mt-1 flex flex-wrap gap-3 text-white/45" style={{ fontSize: 11 }}>
+                  <div className="mt-1 flex flex-wrap gap-3" style={{ fontSize: 11, color: t.textMuted }}>
                     <span>{formatDuration(item.duration_sec)}</span>
                     <span>{Math.round(item.calories)} kcal</span>
                     <span style={{ color: item.score >= 80 ? t.accentStrong : item.score >= 60 ? t.gold : t.secondary }}>{item.note}</span>
@@ -296,7 +296,7 @@ export function ProgressScreen() {
               </div>
             ))
           ) : (
-            <div className="rounded-2xl border border-white/6 bg-white/3 px-4 py-5 text-white/40" style={{ fontSize: 13 }}>
+            <div className="rounded-2xl border border-white/6 bg-white/3 px-4 py-5" style={{ fontSize: 13, color: t.textMuted }}>
               Aucune séance enregistrée.
             </div>
           )}
@@ -317,13 +317,14 @@ function MiniStat({
   value: string;
   tone: string;
 }) {
+  const { t } = useTheme();
   return (
     <div className="rounded-2xl border border-white/8 bg-white/4 p-4">
       <div className="flex items-center gap-2" style={{ color: tone, fontSize: 12, fontWeight: 600 }}>
         {icon}
         {label}
       </div>
-      <div className="mt-3 text-white" style={{ fontFamily: "Sora", fontSize: 24, fontWeight: 700 }}>
+      <div className="mt-3" style={{ fontFamily: "Sora", fontSize: 24, fontWeight: 700, color: t.textPrimary }}>
         {value}
       </div>
     </div>
